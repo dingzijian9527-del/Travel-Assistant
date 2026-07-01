@@ -32,23 +32,29 @@ inclusion: always
 ├── kitex_gen/
 ├── api/                    # Hertz HTTP 网关层
 └── rpc/
-    └── <service>/
-        ├── build.sh
-        ├── handler.go
-        ├── kitex_info.yaml
-        ├── main.go
-        └── script/
-            └── bootstrap.sh
+    ├── <service>/          # 手写业务实现
+    │   ├── handler.go
+    │   ├── service.go
+    │   ├── model.go
+    │   ├── repo.go
+    │   ├── dto.go
+    │   └── errors.go
+    └── scaffold/           # Kitex 脚手架配套文件
+        └── <service>/
+            ├── build.sh
+            ├── kitex_info.yaml
+            └── script/
+                └── bootstrap.sh
 ```
 
 目录职责：
 
 1. `idl/`：存放项目 IDL 文件，例如 `base.thrift`、`travel.thrift`。
 2. `kitex_gen/`：存放 Kitex 根据 IDL 生成的序列化、反序列化、client、server stub 代码。
-3. `rpc/<service>/`：存放单个 RPC 服务的 Kitex 脚手架代码。
+3. `rpc/<service>/`：存放单个 RPC 服务的手写业务实现代码。
 4. `rpc/<service>/handler.go`：服务端业务逻辑主要入口。
-5. `rpc/<service>/main.go`：服务启动与必要资源初始化入口。
-6. `rpc/<service>/script/bootstrap.sh`、`build.sh`：Kitex 生成的构建与启动脚本，默认不做无关修改。
+5. `cmd/<service>/main.go`：服务启动与必要资源初始化入口；脚手架生成到 `rpc/<service>/main.go` 后需移动到 `cmd/<service>/main.go`。
+6. `rpc/scaffold/<service>/script/bootstrap.sh`、`rpc/scaffold/<service>/build.sh`、`rpc/scaffold/<service>/kitex_info.yaml`：Kitex 生成的构建、启动和生成信息文件，默认不做无关修改。
 7. `api/`：Hertz HTTP 网关层目录，只放 HTTP 入口、路由、中间件、请求响应转换和 RPC client 调用编排，不放 RPC 服务内部实现。
 
 ## Hertz 网关层目录约束
@@ -76,7 +82,7 @@ api/
 
 目录职责：
 
-1. `api/main.go`：Hertz 网关启动入口，只负责创建 Hertz server、注册路由和启动服务。
+1. `cmd/api/main.go`：Hertz 网关启动入口，只负责创建 Hertz server、注册路由和启动服务。
 2. `api/router.go`：用户自定义路由注册入口，仅用于 Hertz 官方路由组织方式。
 3. `api/router_gen.go`：`hz` 生成的路由注册代码，默认不手工编辑。
 4. `api/biz/router/`：Hertz 路由分组与中间件挂载代码，必须使用 Hertz 的路由和 group 能力。
@@ -100,7 +106,7 @@ Hertz 开发约束：
 
 ## 禁止事项
 
-1. RPC 服务下禁止在未说明必要性的情况下新建 `cmd/`、`internal/`、`pkg/`、`app/`、`service/`、`controller/`、`repository/`、`biz/`、`configs/` 等非 Kitex 官方示例目录。
+1. RPC 服务下禁止在未说明必要性的情况下新建 `cmd/`、`internal/`、`pkg/`、`app/`、`service/`、`controller/`、`repo/`、`biz/`、`configs/` 等非 Kitex 官方示例目录。
 2. 网关层禁止在 `api/` 官方 Hertz 结构之外新建自定义框架目录；`api/biz/service`、`api/biz/handler`、`api/biz/router` 等 Hertz 官方目录除外。
 3. 禁止把业务代码拆到自定义目录后留下空壳 handler。
 4. 禁止手工修改 `kitex_gen/` 中的生成代码；需要变更接口时应修改 `idl/` 并重新运行 Kitex 生成。
@@ -110,7 +116,7 @@ Hertz 开发约束：
 8. 禁止绕过 Kitex 默认脚手架生成 main package；不得用 custom layout 生成 MVC、分层目录等非本项目规则允许的结构。
 9. 禁止绕过 Hertz 默认脚手架生成网关结构；不得在 `api/` 下另起一套非 Hertz 官方结构。
 10. 禁止把参数校验、鉴权、业务编排、数据处理、数据持久化、响应组装全部堆在同一个函数或同一个文件里。
-11. 禁止跨服务随意引用其他 `rpc/<service>/` 下的内部实现；跨服务协作必须通过 IDL 暴露的 RPC 接口完成。
+11. 禁止跨服务随意引用其他 `rpc/<service>/` 下的内部实现；跨服务协作必须通过 IDL 暴露的 RPC 接口完成。`rpc/scaffold` 只放脚手架配套文件，不放业务逻辑。
 
 ## 多服务并行开发约束
 
@@ -128,14 +134,15 @@ Hertz 开发约束：
 
 ```text
 rpc/<service>/
-├── main.go
 ├── handler.go
 ├── middleware.go
-├── logic_<domain>.go
-├── data_<domain>.go
-├── repository_<domain>.go
-├── converter_<domain>.go
-├── errors.go
+├── service.go
+├── model.go
+├── repo.go
+├── dto.go
+└── errors.go
+
+rpc/scaffold/<service>/
 ├── build.sh
 ├── kitex_info.yaml
 └── script/
@@ -146,28 +153,28 @@ rpc/<service>/
 
 1. 控制层：Kitex handler 是 RPC 控制层入口，只负责接收请求、提取参数、基础参数校验、调用业务逻辑、返回响应。
 2. 中间件：`middleware.go` 负责鉴权、阻断、限流、日志、链路追踪、panic recovery 等横切逻辑，不写具体业务流程。
-3. 业务逻辑层：`logic_<domain>.go` 负责编排业务流程、领域规则判断、调用数据处理和持久化能力，不直接拼 SQL 或封装底层存储细节。
-4. 数据处理层：`data_<domain>.go` 负责清洗、计算、聚合、去重、排序、状态流转等纯数据处理逻辑，尽量保持无外部副作用。
-5. 数据持久化层：`repository_<domain>.go` 负责数据库、缓存、外部存储读写，必须封装参数化查询、事务边界和存储错误转换。
-6. 数据返回层：`converter_<domain>.go` 负责领域对象、存储对象与 IDL response 之间的转换，禁止在 handler 中散落响应拼装逻辑。
+3. 业务逻辑层：`service.go` 负责编排业务流程、领域规则判断、调用数据处理和持久化能力，不直接拼 SQL 或封装底层存储细节。
+4. 数据处理层：`model.go` 负责清洗、计算、聚合、去重、排序、状态流转等纯数据处理逻辑，尽量保持无外部副作用。
+5. 数据持久化层：`repo.go` 负责数据库、缓存、外部存储读写，必须封装参数化查询、事务边界和存储错误转换。
+6. 数据返回层：`dto.go` 负责领域对象、存储对象与 IDL response 之间的转换，禁止在 handler 中散落响应拼装逻辑。
 7. 错误处理：`errors.go` 负责本服务错误定义、错误码映射和对外错误转换，禁止在各层随意硬编码错误消息。
 
 调用方向：
 
 ```text
-handler -> logic -> data/repository -> converter -> response
+handler -> service -> model/repo -> dto -> response
 middleware -> handler
 ```
 
 约束细则：
 
-1. `handler.go` 中单个方法只保留控制流，不承载复杂业务规则；当逻辑超过清晰可读范围时必须下沉到 `logic_<domain>.go`。
+1. `handler.go` 中单个方法只保留控制流，不承载复杂业务规则；当逻辑超过清晰可读范围时必须下沉到 `service.go`。
 2. 鉴权与阻断逻辑必须进入中间件或明确的 guard 方法，禁止散落在多个 handler 方法中重复判断。
 3. 数据处理和数据持久化必须分离；纯计算逻辑不得依赖数据库连接、缓存客户端或 RPC client。
 4. 数据持久化方法只表达存储语义，不负责拼装最终响应。
-5. 响应组装必须集中在 converter 或明确的返回构造方法中，保证 IDL 字段映射可追踪。
+5. 响应组装必须集中在 dto 或明确的返回构造方法中，保证 IDL 字段映射可追踪。
 6. 同一业务能力的参数校验、业务规则、存储访问、响应转换必须各在其位，禁止为了省事写成一个大函数。
-7. 若单服务复杂度确实需要子目录分层，必须先更新本规则并得到用户确认；默认不创建 `controller/`、`service/`、`repository/` 等目录。
+7. 若单服务复杂度确实需要子目录分层，必须先更新本规则并得到用户确认；默认不创建 `controller/`、`service/`、`repo/` 等目录。
 
 ## 生成流程
 
@@ -234,7 +241,7 @@ go mod tidy
 ## 依据
 
 1. Kitex 官方 Code Generation Tool 文档说明：`kitex` 是 Kitex 提供的代码生成命令，支持通过 `-service` 生成服务端项目脚手架。
-2. Kitex 官方高级教程示例结构包含 `go.mod`、`go.sum`、`idl/`、`kitex_gen/`、`rpc/<service>/build.sh`、`handler.go`、`kitex_info.yaml`、`main.go`、`script/bootstrap.sh`。
+2. Kitex 官方高级教程示例结构包含 `go.mod`、`go.sum`、`idl/`、`kitex_gen/`、`rpc/<service>/build.sh`、`handler.go`、`kitex_info.yaml`、`main.go`、`script/bootstrap.sh`；本项目将脚手架配套文件集中到 `rpc/scaffold/<service>/`，业务实现保留在 `rpc/<service>/`。
 3. 官方参考链接：
    - https://www.cloudwego.io/docs/kitex/tutorials/code-gen/code_generation/
    - https://www.cloudwego.io/docs/kitex/getting-started/tutorial/
@@ -244,3 +251,4 @@ go mod tidy
    - https://www.cloudwego.io/docs/hertz/tutorials/basic-feature/route/
    - https://www.cloudwego.io/docs/hertz/tutorials/basic-feature/middleware/
    - https://www.cloudwego.io/docs/hertz/tutorials/basic-feature/binding-and-validate/
+

@@ -1,0 +1,23 @@
+﻿# dependencies
+front/node_modules/
+
+# build outputs
+front/dist/
+rpc/*/output/
+
+# logs
+*.log
+front/dev-server.out.log
+front/dev-server.err.log
+
+# local editor files
+.idea/
+.vscode/
+
+# local environment
+.env
+*.local
+
+# runtime generated files
+logs/
+uploads/

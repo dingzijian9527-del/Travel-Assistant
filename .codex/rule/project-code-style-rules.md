@@ -44,10 +44,10 @@ inclusion: always
 
 1. Handler 只负责请求入口、参数绑定、基础校验、调用业务逻辑和返回结果。
 2. Middleware 只负责鉴权、阻断、限流、日志、链路追踪、Recovery 等横切逻辑。
-3. Logic 负责业务编排、领域规则判断和调用下层能力，不直接拼 SQL 或封装最终响应。
-4. Data 负责纯数据处理，例如清洗、聚合、去重、排序、状态计算，尽量保持无外部副作用。
-5. Repository 负责数据库、缓存、外部存储访问，必须隐藏底层存储细节。
-6. Converter 负责请求、领域对象、存储对象、IDL response 或 HTTP response 之间的转换。
+3. Service 负责业务编排、领域规则判断和调用下层能力，不直接拼 SQL 或封装最终响应。
+4. Model 负责纯数据处理，例如清洗、聚合、去重、排序、状态计算，尽量保持无外部副作用。
+5. Repo 负责数据库、缓存、外部存储访问，必须隐藏底层存储细节。
+6. DTO 负责请求、领域对象、存储对象、IDL response 或 HTTP response 之间的转换。
 7. Errors 负责错误定义、错误码映射和对外错误转换，禁止到处硬编码错误消息。
 
 ## 错误处理
@@ -75,7 +75,7 @@ inclusion: always
 3. HTTP 网关必须使用 Hertz 官方能力处理路由、binding、validator、middleware、render 和 client。
 4. Hertz 没有提供的工具或扩展，必须先说明缺口并经用户确认后新增。
 5. HTTP handler 不直接访问业务服务私有数据库，必须通过 Kitex RPC client 调用业务服务。
-6. 请求和响应字段必须通过 converter 明确转换，禁止在多处散落临时拼装。
+6. 请求和响应字段必须通过 dto 明确转换，禁止在多处散落临时拼装。
 
 ## 日志规范
 
@@ -105,14 +105,14 @@ inclusion: always
 
 统一注释模板：
 
-```go
+
 /*
  * Author： fuyx
  * DataTime： 2026-06-24 11:48:40
  * Desc: 功能简介
  * Body: name -- 用户姓名
  */
-```
+
 
 字段说明：
 
