@@ -37,6 +37,17 @@ redis:
   password: ""
   db: 0
 
+sms:
+  secret_id: ""
+  secret_key: ""
+  sdk_app_id: ""
+  sign_name: ""
+  template_id: ""
+  region: ap-guangzhou
+  endpoint: https://sms.tencentcloudapi.com
+  register_code_expire: 5m
+  dev_return_code: true
+
 auth:
   jwt_secret: travel-assistant-dev-secret
   jwt_expire: 24h
@@ -62,7 +73,7 @@ rag:
 
 ai:
   provider: ark
-  api_key: ark-bdf456fa-13c1-4f13-a13f-cf7514de5fcc-0d417
+  api_key: ""
   base_url: https://ark.cn-beijing.volces.com/api/v3
   endpoint_id: ep-20260627113037-fkmmc
   model_name: DeepSeek-V4-pro
@@ -81,3 +92,4 @@ ai:
     用户说继续、再详细点、换一个、优化、不要太赶时，要基于上一轮方案修改或展开，不要重复生成相同内容。
     非旅游问题统一礼貌婉拒，不延伸回答。
   max_prompt_chars: 2000
+

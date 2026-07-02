@@ -5,9 +5,11 @@ import (
 	"io"
 	"strings"
 	"testing"
+	"time"
 
 	"go.uber.org/zap"
 
+	travelai "github.com/dingzijian9527-del/Travel-Assistant/pkg/ai"
 	"github.com/dingzijian9527-del/Travel-Assistant/pkg/bootstrap"
 	"github.com/dingzijian9527-del/Travel-Assistant/pkg/config"
 )
@@ -96,4 +98,109 @@ func TestUnavailableModelDoesNotUseLocalTravelTemplate(t *testing.T) {
 type streamReadResult struct {
 	text string
 	err  error
+}
+
+type fakeStreamingAIClient struct {
+	available bool
+	streamFn  func(ctx context.Context, messages []travelai.Message, output io.Writer) error
+}
+
+func (f *fakeStreamingAIClient) Available() bool {
+	return f.available
+}
+
+func (f *fakeStreamingAIClient) StreamChatWithMessages(ctx context.Context, messages []travelai.Message, output io.Writer) error {
+	return f.streamFn(ctx, messages, output)
+}
+
+func TestWriteSmartTravelReplyStreamsBeforeCompletion(t *testing.T) {
+	travelSessions = newTravelSessionStore(12)
+	runtime := &bootstrap.Runtime{
+		Config: &config.Config{
+			AI:  config.AIConfig{MaxPromptChars: 2000},
+			RAG: config.RAGConfig{Enabled: false},
+		},
+		Logger: zap.NewNop(),
+	}
+
+	firstChunkWritten := make(chan struct{})
+	releaseSecondChunk := make(chan struct{})
+	client := &fakeStreamingAIClient{
+		available: true,
+		streamFn: func(ctx context.Context, messages []travelai.Message, output io.Writer) error {
+			if len(messages) == 0 || messages[len(messages)-1].Content != "成都三天怎么玩" {
+				t.Fatalf("unexpected messages: %#v", messages)
+			}
+			if _, err := output.Write([]byte("先发")); err != nil {
+				return err
+			}
+			close(firstChunkWritten)
+			<-releaseSecondChunk
+			_, err := output.Write([]byte("后发"))
+			return err
+		},
+	}
+
+	reader, writer := io.Pipe()
+	defer reader.Close()
+	firstChunk := make(chan string, 1)
+	restChunk := make(chan string, 1)
+	streamErr := make(chan error, 1)
+	go func() {
+		defer close(firstChunk)
+		defer close(restChunk)
+		defer close(streamErr)
+		buffer := make([]byte, 16)
+		n, err := reader.Read(buffer)
+		if err != nil {
+			streamErr <- err
+			return
+		}
+		firstChunk <- string(buffer[:n])
+		all, err := io.ReadAll(reader)
+		if err != nil {
+			streamErr <- err
+			return
+		}
+		restChunk <- string(all)
+	}()
+
+	go func() {
+		defer writer.Close()
+		writeSmartTravelReplyWithClient(context.Background(), writer, runtime, 2001, "成都三天怎么玩", client)
+	}()
+
+	select {
+	case <-firstChunkWritten:
+	case <-time.After(2 * time.Second):
+		t.Fatal("first chunk was not written in time")
+	}
+
+	select {
+	case err := <-streamErr:
+		if err != nil {
+			t.Fatalf("expected to read first streamed chunk before completion: %v", err)
+		}
+	case got := <-firstChunk:
+		if got != "先发" {
+			t.Fatalf("unexpected first chunk: %q", got)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("did not receive first streamed chunk in time")
+	}
+
+	close(releaseSecondChunk)
+
+	select {
+	case err := <-streamErr:
+		if err != nil {
+			t.Fatalf("stream read failed: %v", err)
+		}
+	case full := <-restChunk:
+		if full != "后发" {
+			t.Fatalf("unexpected remaining stream content: %q", full)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("stream did not complete in time")
+	}
 }

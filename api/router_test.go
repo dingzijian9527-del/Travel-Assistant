@@ -39,10 +39,11 @@ func TestRegisterIncludesUserRoutes(t *testing.T) {
 	})
 
 	requiredRoutes := map[string]bool{
-		"POST /api/v1/user/register": false,
-		"POST /api/v1/user/login":    false,
-		"GET /api/v1/user/profile":   false,
-		"POST /api/v1/user/profile":  false,
+		"POST /api/v1/user/register":     false,
+		"POST /api/v1/user/login":        false,
+		"GET /api/v1/user/profile":       false,
+		"POST /api/v1/user/profile":      false,
+		"POST /api/v1/sms/register-code": false,
 	}
 	for _, route := range h.Routes() {
 		key := route.Method + " " + route.Path

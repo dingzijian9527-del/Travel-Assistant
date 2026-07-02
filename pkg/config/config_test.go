@@ -1,6 +1,11 @@
 package config
 
-import "testing"
+import (
+	"os"
+	"path/filepath"
+	"testing"
+	"time"
+)
 
 func TestLoadDefaultRAGConfig(t *testing.T) {
 	cfg, err := Load("")
@@ -45,5 +50,30 @@ func TestLoadDefaultInfrastructureConfig(t *testing.T) {
 	}
 	if cfg.Auth.JWTExpire <= 0 {
 		t.Fatalf("jwt expire should be positive: %s", cfg.Auth.JWTExpire)
+	}
+	if cfg.SMS.Endpoint == "" {
+		t.Fatal("sms endpoint should be configured")
+	}
+	if cfg.SMS.RegisterCodeExpire != 5*time.Minute {
+		t.Fatalf("unexpected register code expire: %s", cfg.SMS.RegisterCodeExpire)
+	}
+	if cfg.SMS.DevReturnCode {
+		t.Fatal("default config should not return local register code")
+	}
+}
+
+func TestLoadSMSDevReturnCodeFromConfigFile(t *testing.T) {
+	configPath := filepath.Join(t.TempDir(), "config.yaml")
+	content := []byte("sms:\n  dev_return_code: true\n")
+	if err := os.WriteFile(configPath, content, 0600); err != nil {
+		t.Fatalf("write temp config failed: %v", err)
+	}
+
+	cfg, err := Load(configPath)
+	if err != nil {
+		t.Fatalf("load config failed: %v", err)
+	}
+	if !cfg.SMS.DevReturnCode {
+		t.Fatal("sms dev_return_code should be loaded from config file")
 	}
 }

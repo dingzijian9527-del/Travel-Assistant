@@ -37,6 +37,17 @@ redis:
   password: "${TRAVEL_ASSISTANT_REDIS_PASSWORD}"
   db: 0
 
+sms:
+  secret_id: "${TRAVEL_ASSISTANT_SMS_SECRET_ID}"
+  secret_key: "${TRAVEL_ASSISTANT_SMS_SECRET_KEY}"
+  sdk_app_id: "${TRAVEL_ASSISTANT_SMS_SDK_APP_ID}"
+  sign_name: "${TRAVEL_ASSISTANT_SMS_SIGN_NAME}"
+  template_id: "${TRAVEL_ASSISTANT_SMS_TEMPLATE_ID}"
+  region: ap-guangzhou
+  endpoint: https://sms.tencentcloudapi.com
+  register_code_expire: 5m
+  dev_return_code: false
+
 auth:
   jwt_secret: "${TRAVEL_ASSISTANT_AUTH_JWT_SECRET}"
   jwt_expire: 24h

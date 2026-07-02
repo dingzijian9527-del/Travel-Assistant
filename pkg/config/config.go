@@ -59,6 +59,19 @@ type RedisConfig struct {
 	DB       int    `mapstructure:"db"`
 }
 
+// SMSConfig 描述腾讯云短信验证码发送配置。
+type SMSConfig struct {
+	SecretID           string        `mapstructure:"secret_id"`
+	SecretKey          string        `mapstructure:"secret_key"`
+	SDKAppID           string        `mapstructure:"sdk_app_id"`
+	SignName           string        `mapstructure:"sign_name"`
+	TemplateID         string        `mapstructure:"template_id"`
+	Region             string        `mapstructure:"region"`
+	Endpoint           string        `mapstructure:"endpoint"`
+	RegisterCodeExpire time.Duration `mapstructure:"register_code_expire"`
+	DevReturnCode      bool          `mapstructure:"dev_return_code"`
+}
+
 // AuthConfig 描述网关和用户服务共享的认证令牌配置。
 type AuthConfig struct {
 	JWTSecret string        `mapstructure:"jwt_secret"`
@@ -105,6 +118,7 @@ type Config struct {
 	Log    LogConfig    `mapstructure:"log"`
 	MySQL  MySQLConfig  `mapstructure:"mysql"`
 	Redis  RedisConfig  `mapstructure:"redis"`
+	SMS    SMSConfig    `mapstructure:"sms"`
 	Auth   AuthConfig   `mapstructure:"auth"`
 	Upload UploadConfig `mapstructure:"upload"`
 	AI     AIConfig     `mapstructure:"ai"`
@@ -184,6 +198,15 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("redis.username", "")
 	v.SetDefault("redis.password", "")
 	v.SetDefault("redis.db", 0)
+	v.SetDefault("sms.secret_id", "")
+	v.SetDefault("sms.secret_key", "")
+	v.SetDefault("sms.sdk_app_id", "")
+	v.SetDefault("sms.sign_name", "")
+	v.SetDefault("sms.template_id", "")
+	v.SetDefault("sms.region", "ap-guangzhou")
+	v.SetDefault("sms.endpoint", "https://sms.tencentcloudapi.com")
+	v.SetDefault("sms.register_code_expire", "5m")
+	v.SetDefault("sms.dev_return_code", false)
 	v.SetDefault("auth.jwt_secret", "travel-assistant-dev-secret")
 	v.SetDefault("auth.jwt_expire", "24h")
 	v.SetDefault("upload.local_dir", "uploads")
