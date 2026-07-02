@@ -15,6 +15,7 @@ func Register(h *server.Hertz, runtime *bootstrap.Runtime) {
 	v1 := h.Group("/api/v1")
 	{
 		v1.GET("/config", handler.ConfigSummary(runtime))
+		v1.POST("/sms/register-code", handler.SendRegisterCode(runtime))
 		v1.POST("/user/register", handler.RegisterUser(runtime))
 		v1.POST("/user/login", handler.LoginUser(runtime))
 		v1.GET("/user/profile", handler.GetUserProfile(runtime))

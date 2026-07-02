@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/dingzijian9527-del/Travel-Assistant/pkg/config"
-	_ "github.com/go-sql-driver/mysql"
+	"github.com/dingzijian9527-del/Travel-Assistant/pkg/mysqlx"
 )
 
 type mysqlUserRepo struct {
@@ -17,21 +17,8 @@ type mysqlUserRepo struct {
 }
 
 func newMySQLUserRepo(cfg config.MySQLConfig) (*mysqlUserRepo, error) {
-	db, err := sql.Open("mysql", cfg.DSN)
+	db, err := mysqlx.New(cfg)
 	if err != nil {
-		return nil, err
-	}
-	if cfg.MaxIdleConns > 0 {
-		db.SetMaxIdleConns(cfg.MaxIdleConns)
-	}
-	if cfg.MaxOpenConns > 0 {
-		db.SetMaxOpenConns(cfg.MaxOpenConns)
-	}
-	if cfg.ConnMaxLifetimeSeconds > 0 {
-		db.SetConnMaxLifetime(time.Duration(cfg.ConnMaxLifetimeSeconds) * time.Second)
-	}
-	if err := db.Ping(); err != nil {
-		_ = db.Close()
 		return nil, err
 	}
 	repo := &mysqlUserRepo{db: db}

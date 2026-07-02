@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"strings"
@@ -9,7 +10,6 @@ import (
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
-	aiagent "github.com/dingzijian9527-del/Travel-Assistant/kitex_gen/ai_agent"
 	"go.uber.org/zap"
 
 	"github.com/dingzijian9527-del/Travel-Assistant/api/biz/validator"
@@ -107,19 +107,37 @@ func ChatStream(runtime *bootstrap.Runtime) app.HandlerFunc {
 
 func writeSmartTravelReply(ctx context.Context, writer *io.PipeWriter, runtime *bootstrap.Runtime, userID int64, message string) {
 	defer writer.Close()
-	clients, err := clientsFor(runtime)
-	if err != nil {
-		runtime.Logger.Warn("旅行智能体服务客户端初始化失败", zap.Error(err))
+	writeSmartTravelReplyWithClient(ctx, writer, runtime, userID, message, travelai.NewClient(runtime.Config.AI))
+}
+
+type streamingAIClient interface {
+	Available() bool
+	StreamChatWithMessages(ctx context.Context, messages []travelai.Message, output io.Writer) error
+}
+
+func writeSmartTravelReplyWithClient(ctx context.Context, writer io.Writer, runtime *bootstrap.Runtime, userID int64, message string, client streamingAIClient) {
+	if client == nil || !client.Available() {
 		writeModelUnavailable(ctx, writer, runtime.Logger)
 		return
 	}
-	resp, err := clients.aiAgent.Chat(ctx, &aiagent.ChatRequest{UserId: userID, Message: message})
-	if err != nil || resp == nil || resp.GetBaseResp().GetCode() != 0 || resp.GetReply() == nil {
-		runtime.Logger.Warn("调用旅行智能体服务失败", zap.Error(err))
-		writeModelUnavailable(ctx, writer, runtime.Logger)
+	history := travelSessions.History(userID)
+	referenceContext := retrieveTravelKnowledge(ctx, runtime, message)
+	messages := buildAIContextMessages(history, message, referenceContext)
+
+	var replyBuffer bytes.Buffer
+	streamWriter := io.MultiWriter(writer, &replyBuffer)
+	if err := client.StreamChatWithMessages(ctx, messages, streamWriter); err != nil {
+		runtime.Logger.Warn("流式调用旅行智能体模型失败", zap.Error(err))
+		if replyBuffer.Len() == 0 {
+			writeModelUnavailable(ctx, writer, runtime.Logger)
+		}
 		return
 	}
-	writeTextStream(ctx, writer, resp.GetReply().GetContent(), runtime.Logger)
+
+	replyText := strings.TrimSpace(replyBuffer.String())
+	if replyText != "" {
+		travelSessions.Append(userID, message, replyText)
+	}
 }
 
 func retrieveTravelKnowledge(ctx context.Context, runtime *bootstrap.Runtime, message string) string {

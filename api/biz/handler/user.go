@@ -2,6 +2,8 @@ package handler
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/cloudwego/hertz/pkg/app"
@@ -9,16 +11,25 @@ import (
 	user "github.com/dingzijian9527-del/Travel-Assistant/kitex_gen/user"
 	"github.com/dingzijian9527-del/Travel-Assistant/pkg/bootstrap"
 	"github.com/dingzijian9527-del/Travel-Assistant/pkg/jwtx"
+	"github.com/dingzijian9527-del/Travel-Assistant/pkg/verifycodex"
+	"go.uber.org/zap"
 )
 
 type registerRequest struct {
 	Phone       string `json:"phone"`
+	Code        string `json:"code"`
 	Password    string `json:"password"`
 	Nickname    string `json:"nickname"`
 	AvatarURL   string `json:"avatar_url"`
 	HomeCity    string `json:"home_city"`
 	CurrentCity string `json:"current_city"`
 }
+
+var (
+	errRegisterCodeRequired = errors.New("请输入验证码")
+	errRegisterCodeInvalid  = errors.New("验证码错误或已过期")
+	errRegisterCodeStorage  = errors.New("验证码校验失败")
+)
 
 type loginRequest struct {
 	Phone    string `json:"phone"`
@@ -39,13 +50,33 @@ func RegisterUser(runtime *bootstrap.Runtime) app.HandlerFunc {
 			writeJSON(c, consts.StatusBadRequest, 400, "请求参数错误", nil)
 			return
 		}
+		phone := normalizePhone(req.Phone)
+		if !validMainlandPhone(phone) {
+			writeJSON(c, consts.StatusBadRequest, 400, "手机号格式错误", nil)
+			return
+		}
+		store, err := newRegisterCodeStore(runtime)
+		if err != nil {
+			runtime.Logger.Warn("注册验证码缓存组件初始化失败", zap.Error(err))
+			writeJSON(c, consts.StatusInternalServerError, 500, "验证码缓存不可用", nil)
+			return
+		}
+		if err := validateRegisterCode(ctx, store, phone, req.Code); err != nil {
+			if errors.Is(err, errRegisterCodeRequired) || errors.Is(err, errRegisterCodeInvalid) {
+				writeJSON(c, consts.StatusBadRequest, 400, err.Error(), nil)
+				return
+			}
+			runtime.Logger.Warn("注册验证码校验失败", zap.Error(err))
+			writeJSON(c, consts.StatusInternalServerError, 500, "验证码校验失败", nil)
+			return
+		}
 		clients, err := clientsFor(runtime)
 		if err != nil {
 			writeJSON(c, consts.StatusInternalServerError, 500, "用户服务暂不可用", nil)
 			return
 		}
 		resp, err := clients.user.Register(ctx, &user.RegisterRequest{
-			Phone:       req.Phone,
+			Phone:       phone,
 			Password:    req.Password,
 			Nickname:    optionalRequestString(req.Nickname),
 			AvatarUrl:   optionalRequestString(req.AvatarURL),
@@ -56,8 +87,27 @@ func RegisterUser(runtime *bootstrap.Runtime) app.HandlerFunc {
 			writeJSON(c, consts.StatusInternalServerError, 500, "用户服务调用失败", nil)
 			return
 		}
+		if resp.GetBaseResp().GetCode() == 0 {
+			if err := store.Delete(ctx, phone); err != nil {
+				runtime.Logger.Warn("注册成功后删除验证码失败", zap.Error(err))
+			}
+		}
 		writeRPCResponse(c, resp.GetBaseResp().GetCode(), resp.GetBaseResp().GetMsg(), resp.GetUser())
 	}
+}
+
+func validateRegisterCode(ctx context.Context, store verifycodex.Store, phone string, code string) error {
+	if strings.TrimSpace(code) == "" {
+		return errRegisterCodeRequired
+	}
+	ok, err := store.Check(ctx, phone, code)
+	if err != nil {
+		return fmt.Errorf("%w: %v", errRegisterCodeStorage, err)
+	}
+	if !ok {
+		return errRegisterCodeInvalid
+	}
+	return nil
 }
 
 func LoginUser(runtime *bootstrap.Runtime) app.HandlerFunc {
