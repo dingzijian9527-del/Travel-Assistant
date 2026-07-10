@@ -1,13 +1,12 @@
 package rpcaiagent
 
-import "strings"
+import (
+	"strings"
 
-import aiagent "github.com/dingzijian9527-del/Travel-Assistant/kitex_gen/ai_agent"
+	"github.com/dingzijian9527-del/Travel-Assistant/pkg/repository"
+)
 
-type chatMessageModel struct {
-	Role    aiagent.ChatRole
-	Content string
-}
+type chatMessageModel = repository.ChatMessage
 
 func buildSuggestions(message string) []string {
 	if strings.TrimSpace(message) == "" || !isTravelRelated(message) {

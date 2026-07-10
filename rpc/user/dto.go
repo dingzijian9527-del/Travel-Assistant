@@ -1,4 +1,4 @@
-package rpcuser
+﻿package rpcuser
 
 import (
 	"time"
@@ -18,11 +18,50 @@ func toUserDTO(input *userModel) *user.UserInfo {
 		AvatarUrl:     optionalString(input.AvatarURL),
 		HomeCity:      optionalString(input.HomeCity),
 		CurrentCity:   optionalString(input.CurrentCity),
-		MemberLevel:   input.MemberLevel,
-		AccountStatus: input.AccountStatus,
+		MemberLevel:   "",
+		AccountStatus: input.Status,
 		CreatedAt:     optionalTime(input.CreatedAt),
 		UpdatedAt:     optionalTime(input.UpdatedAt),
 		DeletedAt:     optionalTimePtr(input.DeletedAt),
+	}
+}
+
+func toUserSettingsDTO(input *userSettingsModel) *user.UserSettings {
+	if input == nil {
+		return nil
+	}
+	return &user.UserSettings{
+		TripReminderEnabled:          input.TripReminderEnabled,
+		PriceReminderEnabled:         input.PriceReminderEnabled,
+		PersonalizedRecommendEnabled: input.PersonalizedRecommendEnabled,
+	}
+}
+
+func toUserPreferencesDTO(items []string) *user.UserPreferences {
+	return &user.UserPreferences{Items: normalizePreferences(items)}
+}
+
+func toUserStatsDTO(input *userStatsModel) *user.UserStats {
+	if input == nil {
+		return nil
+	}
+	return &user.UserStats{
+		TripCount:     input.TripCount,
+		FavoriteCount: input.FavoriteCount,
+		UnreadCount:   input.UnreadCount,
+		CouponCount:   input.CouponCount,
+	}
+}
+
+func toUserDashboardDTO(input *userDashboardModel) *user.UserDashboard {
+	if input == nil {
+		return nil
+	}
+	return &user.UserDashboard{
+		User:        toUserDTO(input.User),
+		Stats:       toUserStatsDTO(input.Stats),
+		Settings:    toUserSettingsDTO(input.Settings),
+		Preferences: toUserPreferencesDTO(input.Preferences),
 	}
 }
 
@@ -51,6 +90,26 @@ func profileErrorResponse(err *serviceError) *user.GetProfileResponse {
 
 func updateProfileErrorResponse(err *serviceError) *user.UpdateProfileResponse {
 	return &user.UpdateProfileResponse{BaseResp: errorBaseResp(err)}
+}
+
+func dashboardErrorResponse(err *serviceError) *user.GetDashboardResponse {
+	return &user.GetDashboardResponse{BaseResp: errorBaseResp(err)}
+}
+
+func preferencesErrorResponse(err *serviceError) *user.GetPreferencesResponse {
+	return &user.GetPreferencesResponse{BaseResp: errorBaseResp(err)}
+}
+
+func updatePreferencesErrorResponse(err *serviceError) *user.UpdatePreferencesResponse {
+	return &user.UpdatePreferencesResponse{BaseResp: errorBaseResp(err)}
+}
+
+func settingsErrorResponse(err *serviceError) *user.GetSettingsResponse {
+	return &user.GetSettingsResponse{BaseResp: errorBaseResp(err)}
+}
+
+func updateSettingsErrorResponse(err *serviceError) *user.UpdateSettingsResponse {
+	return &user.UpdateSettingsResponse{BaseResp: errorBaseResp(err)}
 }
 
 func optionalString(value string) *string {

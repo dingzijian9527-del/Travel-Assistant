@@ -40,17 +40,101 @@
       }
     },
     {
+      "path": "pages/profile/edit",
+      "style": {
+        "navigationBarTitleText": "编辑资料",
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/ai/index",
       "style": {
-        "navigationBarTitleText": "AI 智能助手",
+        "navigationBarTitleText": "旅行管家",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/destination/detail",
+      "style": {
+        "navigationBarTitleText": "目的地详情",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/guide/detail",
+      "style": {
+        "navigationBarTitleText": "攻略详情",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/favorites/index",
+      "style": {
+        "navigationBarTitleText": "我的收藏",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/preferences/index",
+      "style": {
+        "navigationBarTitleText": "旅行偏好",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/passengers/index",
+      "style": {
+        "navigationBarTitleText": "常用旅客",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/messages/index",
+      "style": {
+        "navigationBarTitleText": "消息通知",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/security/index",
+      "style": {
+        "navigationBarTitleText": "账号与安全",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/coupons/index",
+      "style": {
+        "navigationBarTitleText": "优惠券",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/settings/index",
+      "style": {
+        "navigationBarTitleText": "设置",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/member-code/index",
+      "style": {
+        "navigationBarTitleText": "会员码",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/invite/index",
+      "style": {
+        "navigationBarTitleText": "邀请好友",
         "navigationStyle": "custom"
       }
     }
   ],
   "tabBar": {
-    "color": "#94a3b8",
-    "selectedColor": "#0b5be7",
-    "backgroundColor": "#ffffff",
+    "color": "#7b8a97",
+    "selectedColor": "#0f5f75",
+    "backgroundColor": "#fafcfa",
     "borderStyle": "white",
     "list": [
       {
@@ -74,8 +158,7 @@
   "globalStyle": {
     "navigationBarTextStyle": "black",
     "navigationBarTitleText": "旅行助手",
-    "navigationBarBackgroundColor": "#ffffff",
-    "backgroundColor": "#f8fafc"
+    "navigationBarBackgroundColor": "#fafcfa",
+    "backgroundColor": "#e5eeeb"
   }
 }
-

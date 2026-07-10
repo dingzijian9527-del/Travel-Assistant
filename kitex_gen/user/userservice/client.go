@@ -15,6 +15,11 @@ type Client interface {
 	Login(ctx context.Context, req *user.LoginRequest, callOptions ...callopt.Option) (r *user.LoginResponse, err error)
 	GetProfile(ctx context.Context, req *user.GetProfileRequest, callOptions ...callopt.Option) (r *user.GetProfileResponse, err error)
 	UpdateProfile(ctx context.Context, req *user.UpdateProfileRequest, callOptions ...callopt.Option) (r *user.UpdateProfileResponse, err error)
+	GetDashboard(ctx context.Context, req *user.GetDashboardRequest, callOptions ...callopt.Option) (r *user.GetDashboardResponse, err error)
+	GetPreferences(ctx context.Context, req *user.GetPreferencesRequest, callOptions ...callopt.Option) (r *user.GetPreferencesResponse, err error)
+	UpdatePreferences(ctx context.Context, req *user.UpdatePreferencesRequest, callOptions ...callopt.Option) (r *user.UpdatePreferencesResponse, err error)
+	GetSettings(ctx context.Context, req *user.GetSettingsRequest, callOptions ...callopt.Option) (r *user.GetSettingsResponse, err error)
+	UpdateSettings(ctx context.Context, req *user.UpdateSettingsRequest, callOptions ...callopt.Option) (r *user.UpdateSettingsResponse, err error)
 }
 
 // NewClient creates a client for the service defined in IDL.
@@ -64,4 +69,29 @@ func (p *kUserServiceClient) GetProfile(ctx context.Context, req *user.GetProfil
 func (p *kUserServiceClient) UpdateProfile(ctx context.Context, req *user.UpdateProfileRequest, callOptions ...callopt.Option) (r *user.UpdateProfileResponse, err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
 	return p.kClient.UpdateProfile(ctx, req)
+}
+
+func (p *kUserServiceClient) GetDashboard(ctx context.Context, req *user.GetDashboardRequest, callOptions ...callopt.Option) (r *user.GetDashboardResponse, err error) {
+	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
+	return p.kClient.GetDashboard(ctx, req)
+}
+
+func (p *kUserServiceClient) GetPreferences(ctx context.Context, req *user.GetPreferencesRequest, callOptions ...callopt.Option) (r *user.GetPreferencesResponse, err error) {
+	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
+	return p.kClient.GetPreferences(ctx, req)
+}
+
+func (p *kUserServiceClient) UpdatePreferences(ctx context.Context, req *user.UpdatePreferencesRequest, callOptions ...callopt.Option) (r *user.UpdatePreferencesResponse, err error) {
+	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
+	return p.kClient.UpdatePreferences(ctx, req)
+}
+
+func (p *kUserServiceClient) GetSettings(ctx context.Context, req *user.GetSettingsRequest, callOptions ...callopt.Option) (r *user.GetSettingsResponse, err error) {
+	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
+	return p.kClient.GetSettings(ctx, req)
+}
+
+func (p *kUserServiceClient) UpdateSettings(ctx context.Context, req *user.UpdateSettingsRequest, callOptions ...callopt.Option) (r *user.UpdateSettingsResponse, err error) {
+	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
+	return p.kClient.UpdateSettings(ctx, req)
 }

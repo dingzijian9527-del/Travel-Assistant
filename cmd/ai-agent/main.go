@@ -1,4 +1,4 @@
-package main
+﻿package main
 
 import (
 	"net"
@@ -18,7 +18,7 @@ func main() {
 	defer runtime.Logger.Sync()
 
 	addr := &net.TCPAddr{IP: net.ParseIP(runtime.Config.RPC.Host), Port: runtime.Config.RPC.AIAgent.Port}
-	svr := aiagentservice.NewServer(new(rpcaiagent.AIAgentServiceImpl), server.WithServiceAddr(addr))
+	svr := aiagentservice.NewServer(rpcaiagent.NewAIAgentServiceImpl(), server.WithServiceAddr(addr))
 	runtime.Logger.Info("旅行智能体 Kitex 服务启动", zap.String("addr", addr.String()))
 	if err := svr.Run(); err != nil {
 		runtime.Logger.Fatal("旅行智能体 Kitex 服务异常退出", zap.Error(err))

@@ -1,4 +1,4 @@
-package handler
+﻿package handler
 
 import (
 	"context"
@@ -43,6 +43,16 @@ type updateProfileRequest struct {
 	CurrentCity string `json:"current_city"`
 }
 
+type updatePreferencesRequest struct {
+	Items []string `json:"items"`
+}
+
+type updateSettingsRequest struct {
+	TripReminderEnabled          bool `json:"trip_reminder_enabled"`
+	PriceReminderEnabled         bool `json:"price_reminder_enabled"`
+	PersonalizedRecommendEnabled bool `json:"personalized_recommend_enabled"`
+}
+
 func RegisterUser(runtime *bootstrap.Runtime) app.HandlerFunc {
 	return func(ctx context.Context, c *app.RequestContext) {
 		var req registerRequest
@@ -58,7 +68,7 @@ func RegisterUser(runtime *bootstrap.Runtime) app.HandlerFunc {
 		store, err := newRegisterCodeStore(runtime)
 		if err != nil {
 			runtime.Logger.Warn("注册验证码缓存组件初始化失败", zap.Error(err))
-			writeJSON(c, consts.StatusInternalServerError, 500, "验证码缓存不可用", nil)
+			writeJSON(c, consts.StatusInternalServerError, 500, "验证码服务暂不可用", nil)
 			return
 		}
 		if err := validateRegisterCode(ctx, store, phone, req.Code); err != nil {
@@ -183,6 +193,124 @@ func UpdateUserProfile(runtime *bootstrap.Runtime) app.HandlerFunc {
 			return
 		}
 		writeRPCResponse(c, resp.GetBaseResp().GetCode(), resp.GetBaseResp().GetMsg(), resp.GetUser())
+	}
+}
+
+func GetUserDashboard(runtime *bootstrap.Runtime) app.HandlerFunc {
+	return func(ctx context.Context, c *app.RequestContext) {
+		claims, ok := claimsFromRequest(runtime, c)
+		if !ok {
+			return
+		}
+		clients, err := clientsFor(runtime)
+		if err != nil {
+			writeJSON(c, consts.StatusInternalServerError, 500, "用户服务暂不可用", nil)
+			return
+		}
+		resp, err := clients.user.GetDashboard(ctx, &user.GetDashboardRequest{Id: claims.UserID})
+		if err != nil || resp == nil {
+			writeJSON(c, consts.StatusInternalServerError, 500, "用户服务调用失败", nil)
+			return
+		}
+		writeRPCResponse(c, resp.GetBaseResp().GetCode(), resp.GetBaseResp().GetMsg(), resp.GetDashboard())
+	}
+}
+
+func GetUserPreferences(runtime *bootstrap.Runtime) app.HandlerFunc {
+	return func(ctx context.Context, c *app.RequestContext) {
+		claims, ok := claimsFromRequest(runtime, c)
+		if !ok {
+			return
+		}
+		clients, err := clientsFor(runtime)
+		if err != nil {
+			writeJSON(c, consts.StatusInternalServerError, 500, "用户服务暂不可用", nil)
+			return
+		}
+		resp, err := clients.user.GetPreferences(ctx, &user.GetPreferencesRequest{Id: claims.UserID})
+		if err != nil || resp == nil {
+			writeJSON(c, consts.StatusInternalServerError, 500, "用户服务调用失败", nil)
+			return
+		}
+		writeRPCResponse(c, resp.GetBaseResp().GetCode(), resp.GetBaseResp().GetMsg(), resp.GetPreferences())
+	}
+}
+
+func UpdateUserPreferences(runtime *bootstrap.Runtime) app.HandlerFunc {
+	return func(ctx context.Context, c *app.RequestContext) {
+		claims, ok := claimsFromRequest(runtime, c)
+		if !ok {
+			return
+		}
+		var req updatePreferencesRequest
+		if err := c.BindAndValidate(&req); err != nil {
+			writeJSON(c, consts.StatusBadRequest, 400, "请求参数错误", nil)
+			return
+		}
+		clients, err := clientsFor(runtime)
+		if err != nil {
+			writeJSON(c, consts.StatusInternalServerError, 500, "用户服务暂不可用", nil)
+			return
+		}
+		resp, err := clients.user.UpdatePreferences(ctx, &user.UpdatePreferencesRequest{
+			Id:    claims.UserID,
+			Items: req.Items,
+		})
+		if err != nil || resp == nil {
+			writeJSON(c, consts.StatusInternalServerError, 500, "用户服务调用失败", nil)
+			return
+		}
+		writeRPCResponse(c, resp.GetBaseResp().GetCode(), resp.GetBaseResp().GetMsg(), resp.GetPreferences())
+	}
+}
+
+func GetUserSettings(runtime *bootstrap.Runtime) app.HandlerFunc {
+	return func(ctx context.Context, c *app.RequestContext) {
+		claims, ok := claimsFromRequest(runtime, c)
+		if !ok {
+			return
+		}
+		clients, err := clientsFor(runtime)
+		if err != nil {
+			writeJSON(c, consts.StatusInternalServerError, 500, "用户服务暂不可用", nil)
+			return
+		}
+		resp, err := clients.user.GetSettings(ctx, &user.GetSettingsRequest{Id: claims.UserID})
+		if err != nil || resp == nil {
+			writeJSON(c, consts.StatusInternalServerError, 500, "用户服务调用失败", nil)
+			return
+		}
+		writeRPCResponse(c, resp.GetBaseResp().GetCode(), resp.GetBaseResp().GetMsg(), resp.GetSettings())
+	}
+}
+
+func UpdateUserSettings(runtime *bootstrap.Runtime) app.HandlerFunc {
+	return func(ctx context.Context, c *app.RequestContext) {
+		claims, ok := claimsFromRequest(runtime, c)
+		if !ok {
+			return
+		}
+		var req updateSettingsRequest
+		if err := c.BindAndValidate(&req); err != nil {
+			writeJSON(c, consts.StatusBadRequest, 400, "请求参数错误", nil)
+			return
+		}
+		clients, err := clientsFor(runtime)
+		if err != nil {
+			writeJSON(c, consts.StatusInternalServerError, 500, "用户服务暂不可用", nil)
+			return
+		}
+		resp, err := clients.user.UpdateSettings(ctx, &user.UpdateSettingsRequest{
+			Id:                           claims.UserID,
+			TripReminderEnabled:          req.TripReminderEnabled,
+			PriceReminderEnabled:         req.PriceReminderEnabled,
+			PersonalizedRecommendEnabled: req.PersonalizedRecommendEnabled,
+		})
+		if err != nil || resp == nil {
+			writeJSON(c, consts.StatusInternalServerError, 500, "用户服务调用失败", nil)
+			return
+		}
+		writeRPCResponse(c, resp.GetBaseResp().GetCode(), resp.GetBaseResp().GetMsg(), resp.GetSettings())
 	}
 }
 

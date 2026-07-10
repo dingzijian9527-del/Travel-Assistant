@@ -1,24 +1,27 @@
-package rpcuser
+﻿package rpcuser
 
 import (
 	"regexp"
 	"strings"
-	"time"
+
+	"github.com/dingzijian9527-del/Travel-Assistant/pkg/repository"
 )
 
-type userModel struct {
-	ID            string
-	Phone         string
-	PasswordHash  string
-	Nickname      string
-	AvatarURL     string
-	HomeCity      string
-	CurrentCity   string
-	MemberLevel   string
-	AccountStatus int32
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
-	DeletedAt     *time.Time
+type userModel = repository.User
+type userSettingsModel = repository.UserSettings
+
+type userDashboardModel struct {
+	User        *userModel
+	Stats       *userStatsModel
+	Preferences []string
+	Settings    *userSettingsModel
+}
+
+type userStatsModel struct {
+	TripCount     int64
+	FavoriteCount int64
+	UnreadCount   int64
+	CouponCount   int64
 }
 
 func normalizePhone(phone string) string {
@@ -44,4 +47,29 @@ func optionalTrimmed(value *string) string {
 		return ""
 	}
 	return strings.TrimSpace(*value)
+}
+
+func defaultUserSettings() *userSettingsModel {
+	return &userSettingsModel{
+		TripReminderEnabled:          true,
+		PriceReminderEnabled:         true,
+		PersonalizedRecommendEnabled: false,
+	}
+}
+
+func normalizePreferences(items []string) []string {
+	seen := make(map[string]struct{}, len(items))
+	result := make([]string, 0, len(items))
+	for _, item := range items {
+		trimmed := strings.TrimSpace(item)
+		if trimmed == "" {
+			continue
+		}
+		if _, exists := seen[trimmed]; exists {
+			continue
+		}
+		seen[trimmed] = struct{}{}
+		result = append(result, trimmed)
+	}
+	return result
 }

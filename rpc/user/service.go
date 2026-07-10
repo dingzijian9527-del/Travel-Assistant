@@ -1,4 +1,4 @@
-package rpcuser
+﻿package rpcuser
 
 import (
 	"context"
@@ -47,16 +47,15 @@ func (l *userService) Register(ctx context.Context, req *user.RegisterRequest) (
 	}
 	now := time.Now()
 	createdUser := &userModel{
-		Phone:         phone,
-		PasswordHash:  hashPassword(req.Password),
-		Nickname:      defaultNickname(phone, req.Nickname),
-		AvatarURL:     optionalTrimmed(req.AvatarUrl),
-		HomeCity:      optionalTrimmed(req.HomeCity),
-		CurrentCity:   optionalTrimmed(req.CurrentCity),
-		MemberLevel:   "normal",
-		AccountStatus: 1,
-		CreatedAt:     now,
-		UpdatedAt:     now,
+		Phone:        phone,
+		PasswordHash: hashPassword(req.Password),
+		Nickname:     defaultNickname(phone, req.Nickname),
+		AvatarURL:    optionalTrimmed(req.AvatarUrl),
+		HomeCity:     optionalTrimmed(req.HomeCity),
+		CurrentCity:  optionalTrimmed(req.CurrentCity),
+		Status:       1,
+		CreatedAt:    now,
+		UpdatedAt:    now,
 	}
 	storedUser, err := l.repo.Create(ctx, createdUser)
 	if err != nil {
@@ -112,6 +111,103 @@ func (l *userService) UpdateProfile(ctx context.Context, req *user.UpdateProfile
 		return nil, errNotFound("user not found")
 	}
 	return updatedUser, nil
+}
+
+func (l *userService) GetPreferences(ctx context.Context, userID string) ([]string, *serviceError) {
+	if strings.TrimSpace(userID) == "" {
+		return nil, errParam("valid id is required")
+	}
+	if _, exists := l.repo.FindByID(ctx, userID); !exists {
+		return nil, errNotFound("user not found")
+	}
+	items, err := l.repo.GetPreferences(ctx, userID)
+	if err != nil {
+		return nil, errBiz("get preferences failed")
+	}
+	return normalizePreferences(items), nil
+}
+
+func (l *userService) UpdatePreferences(ctx context.Context, userID string, preferences []string) ([]string, *serviceError) {
+	if strings.TrimSpace(userID) == "" {
+		return nil, errParam("valid id is required")
+	}
+	if _, exists := l.repo.FindByID(ctx, userID); !exists {
+		return nil, errNotFound("user not found")
+	}
+	cleaned := normalizePreferences(preferences)
+	if err := l.repo.SavePreferences(ctx, userID, cleaned); err != nil {
+		return nil, errBiz("save preferences failed")
+	}
+	return cleaned, nil
+}
+
+func (l *userService) GetSettings(ctx context.Context, userID string) (*userSettingsModel, *serviceError) {
+	if strings.TrimSpace(userID) == "" {
+		return nil, errParam("valid id is required")
+	}
+	if _, exists := l.repo.FindByID(ctx, userID); !exists {
+		return nil, errNotFound("user not found")
+	}
+	settings, err := l.repo.GetSettings(ctx, userID)
+	if err != nil {
+		return nil, errBiz("get settings failed")
+	}
+	if settings == nil {
+		return defaultUserSettings(), nil
+	}
+	return settings, nil
+}
+
+func (l *userService) UpdateSettings(ctx context.Context, userID string, settings *userSettingsModel) (*userSettingsModel, *serviceError) {
+	if strings.TrimSpace(userID) == "" {
+		return nil, errParam("valid id is required")
+	}
+	if settings == nil {
+		return nil, errParam("settings are required")
+	}
+	if _, exists := l.repo.FindByID(ctx, userID); !exists {
+		return nil, errNotFound("user not found")
+	}
+	if err := l.repo.SaveSettings(ctx, userID, settings); err != nil {
+		return nil, errBiz("save settings failed")
+	}
+	return settings, nil
+}
+
+func (l *userService) GetDashboard(ctx context.Context, userID string) (*userDashboardModel, *serviceError) {
+	if strings.TrimSpace(userID) == "" {
+		return nil, errParam("valid id is required")
+	}
+	storedUser, exists := l.repo.FindByID(ctx, userID)
+	if !exists {
+		return nil, errNotFound("user not found")
+	}
+	preferences, err := l.repo.GetPreferences(ctx, userID)
+	if err != nil {
+		return nil, errBiz("get preferences failed")
+	}
+	settings, err := l.repo.GetSettings(ctx, userID)
+	if err != nil {
+		return nil, errBiz("get settings failed")
+	}
+	if settings == nil {
+		settings = defaultUserSettings()
+	}
+	tripCount, err := l.repo.CountTrips(ctx, userID)
+	if err != nil {
+		return nil, errBiz("count trips failed")
+	}
+	return &userDashboardModel{
+		User:        storedUser,
+		Preferences: normalizePreferences(preferences),
+		Settings:    settings,
+		Stats: &userStatsModel{
+			TripCount:     tripCount,
+			FavoriteCount: 0,
+			UnreadCount:   0,
+			CouponCount:   0,
+		},
+	}, nil
 }
 
 func hashPassword(password string) string {

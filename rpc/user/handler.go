@@ -6,6 +6,7 @@ import (
 
 	user "github.com/dingzijian9527-del/Travel-Assistant/kitex_gen/user"
 	"github.com/dingzijian9527-del/Travel-Assistant/pkg/config"
+	mysqlrepo "github.com/dingzijian9527-del/Travel-Assistant/pkg/repository/mysql"
 )
 
 // UserServiceImpl 实现接口定义中的用户服务。
@@ -18,7 +19,7 @@ type UserServiceImpl struct {
 func (s *UserServiceImpl) getService() (*userService, error) {
 	s.initOnce.Do(func() {
 		cfg := config.MustGlobal()
-		repo, err := newMySQLUserRepo(cfg.MySQL)
+		repo, err := mysqlrepo.NewUserRepository(cfg.MySQL)
 		if err != nil {
 			s.initErr = err
 			return
@@ -90,4 +91,83 @@ func (s *UserServiceImpl) UpdateProfile(ctx context.Context, req *user.UpdatePro
 		return updateProfileErrorResponse(svcErr), nil
 	}
 	return &user.UpdateProfileResponse{BaseResp: successBaseResp(), User: toUserDTO(updatedUser)}, nil
+}
+
+func (s *UserServiceImpl) GetDashboard(ctx context.Context, req *user.GetDashboardRequest) (*user.GetDashboardResponse, error) {
+	if req == nil {
+		return dashboardErrorResponse(errParam("request is required")), nil
+	}
+	service, err := s.getService()
+	if err != nil {
+		return dashboardErrorResponse(errInternal("用户服务初始化失败")), nil
+	}
+	dashboard, svcErr := service.GetDashboard(ctx, req.Id)
+	if svcErr != nil {
+		return dashboardErrorResponse(svcErr), nil
+	}
+	return &user.GetDashboardResponse{BaseResp: successBaseResp(), Dashboard: toUserDashboardDTO(dashboard)}, nil
+}
+
+func (s *UserServiceImpl) GetPreferences(ctx context.Context, req *user.GetPreferencesRequest) (*user.GetPreferencesResponse, error) {
+	if req == nil {
+		return preferencesErrorResponse(errParam("request is required")), nil
+	}
+	service, err := s.getService()
+	if err != nil {
+		return preferencesErrorResponse(errInternal("用户服务初始化失败")), nil
+	}
+	items, svcErr := service.GetPreferences(ctx, req.Id)
+	if svcErr != nil {
+		return preferencesErrorResponse(svcErr), nil
+	}
+	return &user.GetPreferencesResponse{BaseResp: successBaseResp(), Preferences: toUserPreferencesDTO(items)}, nil
+}
+
+func (s *UserServiceImpl) UpdatePreferences(ctx context.Context, req *user.UpdatePreferencesRequest) (*user.UpdatePreferencesResponse, error) {
+	if req == nil {
+		return updatePreferencesErrorResponse(errParam("request is required")), nil
+	}
+	service, err := s.getService()
+	if err != nil {
+		return updatePreferencesErrorResponse(errInternal("用户服务初始化失败")), nil
+	}
+	items, svcErr := service.UpdatePreferences(ctx, req.Id, req.Items)
+	if svcErr != nil {
+		return updatePreferencesErrorResponse(svcErr), nil
+	}
+	return &user.UpdatePreferencesResponse{BaseResp: successBaseResp(), Preferences: toUserPreferencesDTO(items)}, nil
+}
+
+func (s *UserServiceImpl) GetSettings(ctx context.Context, req *user.GetSettingsRequest) (*user.GetSettingsResponse, error) {
+	if req == nil {
+		return settingsErrorResponse(errParam("request is required")), nil
+	}
+	service, err := s.getService()
+	if err != nil {
+		return settingsErrorResponse(errInternal("用户服务初始化失败")), nil
+	}
+	settings, svcErr := service.GetSettings(ctx, req.Id)
+	if svcErr != nil {
+		return settingsErrorResponse(svcErr), nil
+	}
+	return &user.GetSettingsResponse{BaseResp: successBaseResp(), Settings: toUserSettingsDTO(settings)}, nil
+}
+
+func (s *UserServiceImpl) UpdateSettings(ctx context.Context, req *user.UpdateSettingsRequest) (*user.UpdateSettingsResponse, error) {
+	if req == nil {
+		return updateSettingsErrorResponse(errParam("request is required")), nil
+	}
+	service, err := s.getService()
+	if err != nil {
+		return updateSettingsErrorResponse(errInternal("用户服务初始化失败")), nil
+	}
+	settings, svcErr := service.UpdateSettings(ctx, req.Id, &userSettingsModel{
+		TripReminderEnabled:          req.TripReminderEnabled,
+		PriceReminderEnabled:         req.PriceReminderEnabled,
+		PersonalizedRecommendEnabled: req.PersonalizedRecommendEnabled,
+	})
+	if svcErr != nil {
+		return updateSettingsErrorResponse(svcErr), nil
+	}
+	return &user.UpdateSettingsResponse{BaseResp: successBaseResp(), Settings: toUserSettingsDTO(settings)}, nil
 }

@@ -41,6 +41,41 @@ var serviceMethods = map[string]kitex.MethodInfo{
 		false,
 		kitex.WithStreamingMode(kitex.StreamingNone),
 	),
+	"GetDashboard": kitex.NewMethodInfo(
+		getDashboardHandler,
+		newUserServiceGetDashboardArgs,
+		newUserServiceGetDashboardResult,
+		false,
+		kitex.WithStreamingMode(kitex.StreamingNone),
+	),
+	"GetPreferences": kitex.NewMethodInfo(
+		getPreferencesHandler,
+		newUserServiceGetPreferencesArgs,
+		newUserServiceGetPreferencesResult,
+		false,
+		kitex.WithStreamingMode(kitex.StreamingNone),
+	),
+	"UpdatePreferences": kitex.NewMethodInfo(
+		updatePreferencesHandler,
+		newUserServiceUpdatePreferencesArgs,
+		newUserServiceUpdatePreferencesResult,
+		false,
+		kitex.WithStreamingMode(kitex.StreamingNone),
+	),
+	"GetSettings": kitex.NewMethodInfo(
+		getSettingsHandler,
+		newUserServiceGetSettingsArgs,
+		newUserServiceGetSettingsResult,
+		false,
+		kitex.WithStreamingMode(kitex.StreamingNone),
+	),
+	"UpdateSettings": kitex.NewMethodInfo(
+		updateSettingsHandler,
+		newUserServiceUpdateSettingsArgs,
+		newUserServiceUpdateSettingsResult,
+		false,
+		kitex.WithStreamingMode(kitex.StreamingNone),
+	),
 }
 
 var (
@@ -179,6 +214,96 @@ func newUserServiceUpdateProfileResult() interface{} {
 	return user.NewUserServiceUpdateProfileResult()
 }
 
+func getDashboardHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	realArg := arg.(*user.UserServiceGetDashboardArgs)
+	realResult := result.(*user.UserServiceGetDashboardResult)
+	success, err := handler.(user.UserService).GetDashboard(ctx, realArg.Req)
+	if err != nil {
+		return err
+	}
+	realResult.Success = success
+	return nil
+}
+func newUserServiceGetDashboardArgs() interface{} {
+	return user.NewUserServiceGetDashboardArgs()
+}
+
+func newUserServiceGetDashboardResult() interface{} {
+	return user.NewUserServiceGetDashboardResult()
+}
+
+func getPreferencesHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	realArg := arg.(*user.UserServiceGetPreferencesArgs)
+	realResult := result.(*user.UserServiceGetPreferencesResult)
+	success, err := handler.(user.UserService).GetPreferences(ctx, realArg.Req)
+	if err != nil {
+		return err
+	}
+	realResult.Success = success
+	return nil
+}
+func newUserServiceGetPreferencesArgs() interface{} {
+	return user.NewUserServiceGetPreferencesArgs()
+}
+
+func newUserServiceGetPreferencesResult() interface{} {
+	return user.NewUserServiceGetPreferencesResult()
+}
+
+func updatePreferencesHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	realArg := arg.(*user.UserServiceUpdatePreferencesArgs)
+	realResult := result.(*user.UserServiceUpdatePreferencesResult)
+	success, err := handler.(user.UserService).UpdatePreferences(ctx, realArg.Req)
+	if err != nil {
+		return err
+	}
+	realResult.Success = success
+	return nil
+}
+func newUserServiceUpdatePreferencesArgs() interface{} {
+	return user.NewUserServiceUpdatePreferencesArgs()
+}
+
+func newUserServiceUpdatePreferencesResult() interface{} {
+	return user.NewUserServiceUpdatePreferencesResult()
+}
+
+func getSettingsHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	realArg := arg.(*user.UserServiceGetSettingsArgs)
+	realResult := result.(*user.UserServiceGetSettingsResult)
+	success, err := handler.(user.UserService).GetSettings(ctx, realArg.Req)
+	if err != nil {
+		return err
+	}
+	realResult.Success = success
+	return nil
+}
+func newUserServiceGetSettingsArgs() interface{} {
+	return user.NewUserServiceGetSettingsArgs()
+}
+
+func newUserServiceGetSettingsResult() interface{} {
+	return user.NewUserServiceGetSettingsResult()
+}
+
+func updateSettingsHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	realArg := arg.(*user.UserServiceUpdateSettingsArgs)
+	realResult := result.(*user.UserServiceUpdateSettingsResult)
+	success, err := handler.(user.UserService).UpdateSettings(ctx, realArg.Req)
+	if err != nil {
+		return err
+	}
+	realResult.Success = success
+	return nil
+}
+func newUserServiceUpdateSettingsArgs() interface{} {
+	return user.NewUserServiceUpdateSettingsArgs()
+}
+
+func newUserServiceUpdateSettingsResult() interface{} {
+	return user.NewUserServiceUpdateSettingsResult()
+}
+
 type kClient struct {
 	c client.Client
 }
@@ -224,6 +349,56 @@ func (p *kClient) UpdateProfile(ctx context.Context, req *user.UpdateProfileRequ
 	_args.Req = req
 	var _result user.UserServiceUpdateProfileResult
 	if err = p.c.Call(ctx, "UpdateProfile", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+
+func (p *kClient) GetDashboard(ctx context.Context, req *user.GetDashboardRequest) (r *user.GetDashboardResponse, err error) {
+	var _args user.UserServiceGetDashboardArgs
+	_args.Req = req
+	var _result user.UserServiceGetDashboardResult
+	if err = p.c.Call(ctx, "GetDashboard", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+
+func (p *kClient) GetPreferences(ctx context.Context, req *user.GetPreferencesRequest) (r *user.GetPreferencesResponse, err error) {
+	var _args user.UserServiceGetPreferencesArgs
+	_args.Req = req
+	var _result user.UserServiceGetPreferencesResult
+	if err = p.c.Call(ctx, "GetPreferences", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+
+func (p *kClient) UpdatePreferences(ctx context.Context, req *user.UpdatePreferencesRequest) (r *user.UpdatePreferencesResponse, err error) {
+	var _args user.UserServiceUpdatePreferencesArgs
+	_args.Req = req
+	var _result user.UserServiceUpdatePreferencesResult
+	if err = p.c.Call(ctx, "UpdatePreferences", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+
+func (p *kClient) GetSettings(ctx context.Context, req *user.GetSettingsRequest) (r *user.GetSettingsResponse, err error) {
+	var _args user.UserServiceGetSettingsArgs
+	_args.Req = req
+	var _result user.UserServiceGetSettingsResult
+	if err = p.c.Call(ctx, "GetSettings", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+
+func (p *kClient) UpdateSettings(ctx context.Context, req *user.UpdateSettingsRequest) (r *user.UpdateSettingsResponse, err error) {
+	var _args user.UserServiceUpdateSettingsArgs
+	_args.Req = req
+	var _result user.UserServiceUpdateSettingsResult
+	if err = p.c.Call(ctx, "UpdateSettings", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil

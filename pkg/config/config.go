@@ -7,13 +7,11 @@ import (
 	"github.com/spf13/viper"
 )
 
-// AppConfig 描述应用基础信息。
 type AppConfig struct {
 	Name string `mapstructure:"name"`
 	Env  string `mapstructure:"env"`
 }
 
-// HTTPConfig 描述网关监听与超时配置。
 type HTTPConfig struct {
 	Host         string        `mapstructure:"host"`
 	Port         int           `mapstructure:"port"`
@@ -21,21 +19,19 @@ type HTTPConfig struct {
 	WriteTimeout time.Duration `mapstructure:"write_timeout"`
 }
 
-// RPCServiceConfig 描述单个远程过程调用服务的本地端口和调用地址。
 type RPCServiceConfig struct {
 	ServiceName string `mapstructure:"service_name"`
 	Port        int    `mapstructure:"port"`
 	Target      string `mapstructure:"target"`
 }
 
-// RPCConfig 描述所有远程过程调用服务的统一配置入口。
 type RPCConfig struct {
 	Host    string           `mapstructure:"host"`
 	User    RPCServiceConfig `mapstructure:"user"`
 	AIAgent RPCServiceConfig `mapstructure:"ai_agent"`
+	Trip    RPCServiceConfig `mapstructure:"trip"`
 }
 
-// LogConfig 描述日志输出和保留策略。
 type LogConfig struct {
 	Level      string `mapstructure:"level"`
 	Dir        string `mapstructure:"dir"`
@@ -43,7 +39,6 @@ type LogConfig struct {
 	Console    bool   `mapstructure:"console"`
 }
 
-// MySQLConfig 描述用户服务持久化所需的 MySQL 配置。
 type MySQLConfig struct {
 	DSN                    string `mapstructure:"dsn"`
 	MaxIdleConns           int    `mapstructure:"max_idle_conns"`
@@ -51,7 +46,6 @@ type MySQLConfig struct {
 	ConnMaxLifetimeSeconds int    `mapstructure:"conn_max_lifetime_seconds"`
 }
 
-// RedisConfig 描述缓存服务连接配置，当前预留给会话和热点数据缓存。
 type RedisConfig struct {
 	Addr     string `mapstructure:"addr"`
 	Username string `mapstructure:"username"`
@@ -59,7 +53,6 @@ type RedisConfig struct {
 	DB       int    `mapstructure:"db"`
 }
 
-// SMSConfig 描述腾讯云短信验证码发送配置。
 type SMSConfig struct {
 	SecretID           string        `mapstructure:"secret_id"`
 	SecretKey          string        `mapstructure:"secret_key"`
@@ -72,20 +65,26 @@ type SMSConfig struct {
 	DevReturnCode      bool          `mapstructure:"dev_return_code"`
 }
 
-// AuthConfig 描述网关和用户服务共享的认证令牌配置。
 type AuthConfig struct {
 	JWTSecret string        `mapstructure:"jwt_secret"`
 	JWTExpire time.Duration `mapstructure:"jwt_expire"`
 }
 
-// UploadConfig 描述文件上传限制。
-type UploadConfig struct {
-	LocalDir          string   `mapstructure:"local_dir"`
-	MaxSizeMB         int64    `mapstructure:"max_size_mb"`
-	AllowedExtensions []string `mapstructure:"allowed_extensions"`
+type UploadQiniuConfig struct {
+	AccessKey  string `mapstructure:"access_key"`
+	SecretKey  string `mapstructure:"secret_key"`
+	Bucket     string `mapstructure:"bucket"`
+	URL        string `mapstructure:"url"`
+	UploadHost string `mapstructure:"upload_host"`
 }
 
-// AIConfig 描述旅行智能体调用大模型所需配置。
+type UploadConfig struct {
+	LocalDir          string            `mapstructure:"local_dir"`
+	MaxSizeMB         int64             `mapstructure:"max_size_mb"`
+	AllowedExtensions []string          `mapstructure:"allowed_extensions"`
+	Qiniu             UploadQiniuConfig `mapstructure:"qiniu"`
+}
+
 type AIConfig struct {
 	Provider       string        `mapstructure:"provider"`
 	APIKey         string        `mapstructure:"api_key"`
@@ -99,7 +98,6 @@ type AIConfig struct {
 	MaxPromptChars int           `mapstructure:"max_prompt_chars"`
 }
 
-// RAGConfig describes retrieval augmented generation settings.
 type RAGConfig struct {
 	Enabled        bool    `mapstructure:"enabled"`
 	Provider       string  `mapstructure:"provider"`
@@ -110,24 +108,30 @@ type RAGConfig struct {
 	MinScore       float64 `mapstructure:"min_score"`
 }
 
-// Config 是进程启动时加载的完整配置。
+type TravelDataConfig struct {
+	Enabled     bool          `mapstructure:"enabled"`
+	AmapKey     string        `mapstructure:"amap_key"`
+	QWeatherKey string        `mapstructure:"qweather_key"`
+	Timeout     time.Duration `mapstructure:"timeout"`
+}
+
 type Config struct {
-	App    AppConfig    `mapstructure:"app"`
-	HTTP   HTTPConfig   `mapstructure:"http"`
-	RPC    RPCConfig    `mapstructure:"rpc"`
-	Log    LogConfig    `mapstructure:"log"`
-	MySQL  MySQLConfig  `mapstructure:"mysql"`
-	Redis  RedisConfig  `mapstructure:"redis"`
-	SMS    SMSConfig    `mapstructure:"sms"`
-	Auth   AuthConfig   `mapstructure:"auth"`
-	Upload UploadConfig `mapstructure:"upload"`
-	AI     AIConfig     `mapstructure:"ai"`
-	RAG    RAGConfig    `mapstructure:"rag"`
+	App        AppConfig        `mapstructure:"app"`
+	HTTP       HTTPConfig       `mapstructure:"http"`
+	RPC        RPCConfig        `mapstructure:"rpc"`
+	Log        LogConfig        `mapstructure:"log"`
+	MySQL      MySQLConfig      `mapstructure:"mysql"`
+	Redis      RedisConfig      `mapstructure:"redis"`
+	SMS        SMSConfig        `mapstructure:"sms"`
+	Auth       AuthConfig       `mapstructure:"auth"`
+	Upload     UploadConfig     `mapstructure:"upload"`
+	AI         AIConfig         `mapstructure:"ai"`
+	RAG        RAGConfig        `mapstructure:"rag"`
+	TravelData TravelDataConfig `mapstructure:"travel_data"`
 }
 
 var global *Config
 
-// Load 使用配置读取工具从配置文件和环境变量加载配置。
 func Load(path string) (*Config, error) {
 	v := viper.New()
 	setDefaults(v)
@@ -154,7 +158,6 @@ func Load(path string) (*Config, error) {
 	return &cfg, nil
 }
 
-// InitGlobal 加载并缓存进程级配置。
 func InitGlobal(path string) (*Config, error) {
 	cfg, err := Load(path)
 	if err != nil {
@@ -164,10 +167,9 @@ func InitGlobal(path string) (*Config, error) {
 	return cfg, nil
 }
 
-// MustGlobal 返回进程级配置，未初始化时直接失败。
 func MustGlobal() *Config {
 	if global == nil {
-		panic("配置未初始化")
+		panic("閰嶇疆鏈垵濮嬪寲")
 	}
 	return global
 }
@@ -186,6 +188,9 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("rpc.ai_agent.service_name", "ai-agent-service")
 	v.SetDefault("rpc.ai_agent.port", 9002)
 	v.SetDefault("rpc.ai_agent.target", "127.0.0.1:9002")
+	v.SetDefault("rpc.trip.service_name", "trip-service")
+	v.SetDefault("rpc.trip.port", 9003)
+	v.SetDefault("rpc.trip.target", "127.0.0.1:9003")
 	v.SetDefault("log.level", "info")
 	v.SetDefault("log.dir", "logs")
 	v.SetDefault("log.max_age_days", 7)
@@ -212,6 +217,11 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("upload.local_dir", "uploads")
 	v.SetDefault("upload.max_size_mb", 20)
 	v.SetDefault("upload.allowed_extensions", []string{".jpg", ".jpeg", ".png", ".webp", ".pdf"})
+	v.SetDefault("upload.qiniu.access_key", "")
+	v.SetDefault("upload.qiniu.secret_key", "")
+	v.SetDefault("upload.qiniu.bucket", "")
+	v.SetDefault("upload.qiniu.url", "")
+	v.SetDefault("upload.qiniu.upload_host", "https://up-z2.qiniup.com")
 	v.SetDefault("ai.provider", "ark")
 	v.SetDefault("ai.api_key", "")
 	v.SetDefault("ai.base_url", "https://ark.cn-beijing.volces.com/api/v3")
@@ -220,7 +230,7 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("ai.model", "")
 	v.SetDefault("ai.timeout", "60s")
 	v.SetDefault("ai.stream", true)
-	v.SetDefault("ai.system_prompt", "你是旅行助手项目中的旅游专用智能体，只回答出行计划、旅游攻略、目的地、交通、酒店、天气和美食相关问题。")
+	v.SetDefault("ai.system_prompt", "你是旅行助手项目中的旅行智能体，只回答出行计划、旅游攻略、目的地、交通、酒店、天气和美食相关问题。")
 	v.SetDefault("ai.max_prompt_chars", 2000)
 	v.SetDefault("rag.enabled", true)
 	v.SetDefault("rag.provider", "local")
@@ -229,4 +239,8 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("rag.embedding_dim", 768)
 	v.SetDefault("rag.top_k", 3)
 	v.SetDefault("rag.min_score", 0.15)
+	v.SetDefault("travel_data.enabled", true)
+	v.SetDefault("travel_data.amap_key", "")
+	v.SetDefault("travel_data.qweather_key", "")
+	v.SetDefault("travel_data.timeout", "5s")
 }

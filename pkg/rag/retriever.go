@@ -1,4 +1,4 @@
-package rag
+﻿package rag
 
 import (
 	"context"
@@ -6,12 +6,136 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/milvus-io/milvus-sdk-go/v2/client"
+	"github.com/milvus-io/milvus-sdk-go/v2/entity"
+
 	"github.com/dingzijian9527-del/Travel-Assistant/pkg/config"
 )
 
 // Retriever searches travel knowledge for the current user question.
 type Retriever interface {
 	Search(ctx context.Context, query string, cfg config.RAGConfig) ([]Result, error)
+}
+
+// MilvusRetriever 从 Milvus 向量数据库检索旅行知识。
+type MilvusRetriever struct {
+	milvusClient client.Client
+	embedder     Embedder
+}
+
+// NewMilvusRetriever 创建基于 Milvus 的向量检索器。
+func NewMilvusRetriever(milvusClient client.Client, embedder Embedder) *MilvusRetriever {
+	return &MilvusRetriever{milvusClient: milvusClient, embedder: embedder}
+}
+
+// Search 将用户问题转成向量后在 Milvus 中做近似搜索，返回最相关的知识条目。
+func (r *MilvusRetriever) Search(ctx context.Context, query string, cfg config.RAGConfig) ([]Result, error) {
+	if !cfg.Enabled || strings.TrimSpace(query) == "" || cfg.CollectionName == "" {
+		return nil, nil
+	}
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+	}
+
+	queryVector := entity.FloatVector(r.embedder.Embed(query))
+	searchParams, _ := entity.NewIndexFlatSearchParam()
+
+	searchResult, err := r.milvusClient.Search(
+		ctx,
+		cfg.CollectionName,
+		nil,
+		"",
+		[]string{"id", "title", "city", "tags", "content"},
+		[]entity.Vector{queryVector},
+		"embedding",
+		entity.L2,
+		cfg.TopK,
+		searchParams,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if len(searchResult) == 0 {
+		return nil, nil
+	}
+
+	results := make([]Result, 0, len(searchResult))
+	for _, sr := range searchResult {
+		fields := sr.Fields
+		if len(fields) < 5 {
+			continue
+		}
+		// 取该结果的第一条匹配记录（SearchResult 可能包含多条）
+		results = append(results, extractResults(fields, sr.Scores, cfg.MinScore)...)
+	}
+
+	sort.Slice(results, func(i, j int) bool {
+		if results[i].Score == results[j].Score {
+			return results[i].Document.ID < results[j].Document.ID
+		}
+		return results[i].Score > results[j].Score
+	})
+	if cfg.TopK > 0 && len(results) > cfg.TopK {
+		results = results[:cfg.TopK]
+	}
+	return results, nil
+}
+
+func extractResults(fields client.ResultSet, scores []float32, minScore float64) []Result {
+	if len(fields) < 5 || len(scores) == 0 {
+		return nil
+	}
+	count := fields[0].Len()
+	if count > len(scores) {
+		count = len(scores)
+	}
+	results := make([]Result, 0, count)
+	for i := 0; i < count; i++ {
+		result := Result{Score: float64(scores[i])}
+		if score := float64(scores[i]); score < minScore {
+			continue
+		}
+		if idCol, ok := fields[0].(*entity.ColumnVarChar); ok {
+			if val, err := idCol.ValueByIdx(i); err == nil {
+				result.Document.ID = val
+			}
+		}
+		if titleCol, ok := fields[1].(*entity.ColumnVarChar); ok {
+			if val, err := titleCol.ValueByIdx(i); err == nil {
+				result.Document.Title = val
+			}
+		}
+		if cityCol, ok := fields[2].(*entity.ColumnVarChar); ok {
+			if val, err := cityCol.ValueByIdx(i); err == nil {
+				result.Document.City = val
+			}
+		}
+		if tagsCol, ok := fields[3].(*entity.ColumnVarChar); ok {
+			if val, err := tagsCol.ValueByIdx(i); err == nil {
+				result.Document.Tags = splitComma(val)
+			}
+		}
+		if contentCol, ok := fields[4].(*entity.ColumnVarChar); ok {
+			if val, err := contentCol.ValueByIdx(i); err == nil {
+				result.Document.Content = val
+			}
+		}
+		results = append(results, result)
+	}
+	return results
+}
+
+func splitComma(val string) []string {
+	parts := strings.Split(val, ",")
+	result := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if trimmed := strings.TrimSpace(p); trimmed != "" {
+			result = append(result, trimmed)
+		}
+	}
+	return result
 }
 
 // LocalRetriever is a deterministic keyword retriever for built-in snippets.

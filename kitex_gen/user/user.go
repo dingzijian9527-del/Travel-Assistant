@@ -701,6 +701,691 @@ var fieldIDToName_UpdateProfileResponse = map[int16]string{
 	2: "user",
 }
 
+type UserStats struct {
+	TripCount     int64 `thrift:"tripCount,1,required" frugal:"1,required,i64" json:"tripCount"`
+	FavoriteCount int64 `thrift:"favoriteCount,2,required" frugal:"2,required,i64" json:"favoriteCount"`
+	UnreadCount   int64 `thrift:"unreadCount,3,required" frugal:"3,required,i64" json:"unreadCount"`
+	CouponCount   int64 `thrift:"couponCount,4,required" frugal:"4,required,i64" json:"couponCount"`
+}
+
+func NewUserStats() *UserStats {
+	return &UserStats{}
+}
+
+func (p *UserStats) InitDefault() {
+}
+
+func (p *UserStats) GetTripCount() (v int64) {
+	return p.TripCount
+}
+
+func (p *UserStats) GetFavoriteCount() (v int64) {
+	return p.FavoriteCount
+}
+
+func (p *UserStats) GetUnreadCount() (v int64) {
+	return p.UnreadCount
+}
+
+func (p *UserStats) GetCouponCount() (v int64) {
+	return p.CouponCount
+}
+func (p *UserStats) SetTripCount(val int64) {
+	p.TripCount = val
+}
+func (p *UserStats) SetFavoriteCount(val int64) {
+	p.FavoriteCount = val
+}
+func (p *UserStats) SetUnreadCount(val int64) {
+	p.UnreadCount = val
+}
+func (p *UserStats) SetCouponCount(val int64) {
+	p.CouponCount = val
+}
+
+func (p *UserStats) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("UserStats(%+v)", *p)
+}
+
+var fieldIDToName_UserStats = map[int16]string{
+	1: "tripCount",
+	2: "favoriteCount",
+	3: "unreadCount",
+	4: "couponCount",
+}
+
+type UserSettings struct {
+	TripReminderEnabled          bool `thrift:"tripReminderEnabled,1,required" frugal:"1,required,bool" json:"tripReminderEnabled"`
+	PriceReminderEnabled         bool `thrift:"priceReminderEnabled,2,required" frugal:"2,required,bool" json:"priceReminderEnabled"`
+	PersonalizedRecommendEnabled bool `thrift:"personalizedRecommendEnabled,3,required" frugal:"3,required,bool" json:"personalizedRecommendEnabled"`
+}
+
+func NewUserSettings() *UserSettings {
+	return &UserSettings{}
+}
+
+func (p *UserSettings) InitDefault() {
+}
+
+func (p *UserSettings) GetTripReminderEnabled() (v bool) {
+	return p.TripReminderEnabled
+}
+
+func (p *UserSettings) GetPriceReminderEnabled() (v bool) {
+	return p.PriceReminderEnabled
+}
+
+func (p *UserSettings) GetPersonalizedRecommendEnabled() (v bool) {
+	return p.PersonalizedRecommendEnabled
+}
+func (p *UserSettings) SetTripReminderEnabled(val bool) {
+	p.TripReminderEnabled = val
+}
+func (p *UserSettings) SetPriceReminderEnabled(val bool) {
+	p.PriceReminderEnabled = val
+}
+func (p *UserSettings) SetPersonalizedRecommendEnabled(val bool) {
+	p.PersonalizedRecommendEnabled = val
+}
+
+func (p *UserSettings) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("UserSettings(%+v)", *p)
+}
+
+var fieldIDToName_UserSettings = map[int16]string{
+	1: "tripReminderEnabled",
+	2: "priceReminderEnabled",
+	3: "personalizedRecommendEnabled",
+}
+
+type UserPreferences struct {
+	Items []string `thrift:"items,1,required" frugal:"1,required,list<string>" json:"items"`
+}
+
+func NewUserPreferences() *UserPreferences {
+	return &UserPreferences{}
+}
+
+func (p *UserPreferences) InitDefault() {
+}
+
+func (p *UserPreferences) GetItems() (v []string) {
+	return p.Items
+}
+func (p *UserPreferences) SetItems(val []string) {
+	p.Items = val
+}
+
+func (p *UserPreferences) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("UserPreferences(%+v)", *p)
+}
+
+var fieldIDToName_UserPreferences = map[int16]string{
+	1: "items",
+}
+
+type UserDashboard struct {
+	User        *UserInfo        `thrift:"user,1,optional" frugal:"1,optional,UserInfo" json:"user,omitempty"`
+	Stats       *UserStats       `thrift:"stats,2,optional" frugal:"2,optional,UserStats" json:"stats,omitempty"`
+	Settings    *UserSettings    `thrift:"settings,3,optional" frugal:"3,optional,UserSettings" json:"settings,omitempty"`
+	Preferences *UserPreferences `thrift:"preferences,4,optional" frugal:"4,optional,UserPreferences" json:"preferences,omitempty"`
+}
+
+func NewUserDashboard() *UserDashboard {
+	return &UserDashboard{}
+}
+
+func (p *UserDashboard) InitDefault() {
+}
+
+var UserDashboard_User_DEFAULT *UserInfo
+
+func (p *UserDashboard) GetUser() (v *UserInfo) {
+	if !p.IsSetUser() {
+		return UserDashboard_User_DEFAULT
+	}
+	return p.User
+}
+
+var UserDashboard_Stats_DEFAULT *UserStats
+
+func (p *UserDashboard) GetStats() (v *UserStats) {
+	if !p.IsSetStats() {
+		return UserDashboard_Stats_DEFAULT
+	}
+	return p.Stats
+}
+
+var UserDashboard_Settings_DEFAULT *UserSettings
+
+func (p *UserDashboard) GetSettings() (v *UserSettings) {
+	if !p.IsSetSettings() {
+		return UserDashboard_Settings_DEFAULT
+	}
+	return p.Settings
+}
+
+var UserDashboard_Preferences_DEFAULT *UserPreferences
+
+func (p *UserDashboard) GetPreferences() (v *UserPreferences) {
+	if !p.IsSetPreferences() {
+		return UserDashboard_Preferences_DEFAULT
+	}
+	return p.Preferences
+}
+func (p *UserDashboard) SetUser(val *UserInfo) {
+	p.User = val
+}
+func (p *UserDashboard) SetStats(val *UserStats) {
+	p.Stats = val
+}
+func (p *UserDashboard) SetSettings(val *UserSettings) {
+	p.Settings = val
+}
+func (p *UserDashboard) SetPreferences(val *UserPreferences) {
+	p.Preferences = val
+}
+
+func (p *UserDashboard) IsSetUser() bool {
+	return p.User != nil
+}
+
+func (p *UserDashboard) IsSetStats() bool {
+	return p.Stats != nil
+}
+
+func (p *UserDashboard) IsSetSettings() bool {
+	return p.Settings != nil
+}
+
+func (p *UserDashboard) IsSetPreferences() bool {
+	return p.Preferences != nil
+}
+
+func (p *UserDashboard) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("UserDashboard(%+v)", *p)
+}
+
+var fieldIDToName_UserDashboard = map[int16]string{
+	1: "user",
+	2: "stats",
+	3: "settings",
+	4: "preferences",
+}
+
+type GetDashboardRequest struct {
+	Id string `thrift:"id,1,required" frugal:"1,required,string" json:"id"`
+}
+
+func NewGetDashboardRequest() *GetDashboardRequest {
+	return &GetDashboardRequest{}
+}
+
+func (p *GetDashboardRequest) InitDefault() {
+}
+
+func (p *GetDashboardRequest) GetId() (v string) {
+	return p.Id
+}
+func (p *GetDashboardRequest) SetId(val string) {
+	p.Id = val
+}
+
+func (p *GetDashboardRequest) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("GetDashboardRequest(%+v)", *p)
+}
+
+var fieldIDToName_GetDashboardRequest = map[int16]string{
+	1: "id",
+}
+
+type GetDashboardResponse struct {
+	BaseResp  *base.BaseResp `thrift:"baseResp,1,required" frugal:"1,required,base.BaseResp" json:"baseResp"`
+	Dashboard *UserDashboard `thrift:"dashboard,2,optional" frugal:"2,optional,UserDashboard" json:"dashboard,omitempty"`
+}
+
+func NewGetDashboardResponse() *GetDashboardResponse {
+	return &GetDashboardResponse{}
+}
+
+func (p *GetDashboardResponse) InitDefault() {
+}
+
+var GetDashboardResponse_BaseResp_DEFAULT *base.BaseResp
+
+func (p *GetDashboardResponse) GetBaseResp() (v *base.BaseResp) {
+	if !p.IsSetBaseResp() {
+		return GetDashboardResponse_BaseResp_DEFAULT
+	}
+	return p.BaseResp
+}
+
+var GetDashboardResponse_Dashboard_DEFAULT *UserDashboard
+
+func (p *GetDashboardResponse) GetDashboard() (v *UserDashboard) {
+	if !p.IsSetDashboard() {
+		return GetDashboardResponse_Dashboard_DEFAULT
+	}
+	return p.Dashboard
+}
+func (p *GetDashboardResponse) SetBaseResp(val *base.BaseResp) {
+	p.BaseResp = val
+}
+func (p *GetDashboardResponse) SetDashboard(val *UserDashboard) {
+	p.Dashboard = val
+}
+
+func (p *GetDashboardResponse) IsSetBaseResp() bool {
+	return p.BaseResp != nil
+}
+
+func (p *GetDashboardResponse) IsSetDashboard() bool {
+	return p.Dashboard != nil
+}
+
+func (p *GetDashboardResponse) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("GetDashboardResponse(%+v)", *p)
+}
+
+var fieldIDToName_GetDashboardResponse = map[int16]string{
+	1: "baseResp",
+	2: "dashboard",
+}
+
+type GetPreferencesRequest struct {
+	Id string `thrift:"id,1,required" frugal:"1,required,string" json:"id"`
+}
+
+func NewGetPreferencesRequest() *GetPreferencesRequest {
+	return &GetPreferencesRequest{}
+}
+
+func (p *GetPreferencesRequest) InitDefault() {
+}
+
+func (p *GetPreferencesRequest) GetId() (v string) {
+	return p.Id
+}
+func (p *GetPreferencesRequest) SetId(val string) {
+	p.Id = val
+}
+
+func (p *GetPreferencesRequest) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("GetPreferencesRequest(%+v)", *p)
+}
+
+var fieldIDToName_GetPreferencesRequest = map[int16]string{
+	1: "id",
+}
+
+type GetPreferencesResponse struct {
+	BaseResp    *base.BaseResp   `thrift:"baseResp,1,required" frugal:"1,required,base.BaseResp" json:"baseResp"`
+	Preferences *UserPreferences `thrift:"preferences,2,optional" frugal:"2,optional,UserPreferences" json:"preferences,omitempty"`
+}
+
+func NewGetPreferencesResponse() *GetPreferencesResponse {
+	return &GetPreferencesResponse{}
+}
+
+func (p *GetPreferencesResponse) InitDefault() {
+}
+
+var GetPreferencesResponse_BaseResp_DEFAULT *base.BaseResp
+
+func (p *GetPreferencesResponse) GetBaseResp() (v *base.BaseResp) {
+	if !p.IsSetBaseResp() {
+		return GetPreferencesResponse_BaseResp_DEFAULT
+	}
+	return p.BaseResp
+}
+
+var GetPreferencesResponse_Preferences_DEFAULT *UserPreferences
+
+func (p *GetPreferencesResponse) GetPreferences() (v *UserPreferences) {
+	if !p.IsSetPreferences() {
+		return GetPreferencesResponse_Preferences_DEFAULT
+	}
+	return p.Preferences
+}
+func (p *GetPreferencesResponse) SetBaseResp(val *base.BaseResp) {
+	p.BaseResp = val
+}
+func (p *GetPreferencesResponse) SetPreferences(val *UserPreferences) {
+	p.Preferences = val
+}
+
+func (p *GetPreferencesResponse) IsSetBaseResp() bool {
+	return p.BaseResp != nil
+}
+
+func (p *GetPreferencesResponse) IsSetPreferences() bool {
+	return p.Preferences != nil
+}
+
+func (p *GetPreferencesResponse) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("GetPreferencesResponse(%+v)", *p)
+}
+
+var fieldIDToName_GetPreferencesResponse = map[int16]string{
+	1: "baseResp",
+	2: "preferences",
+}
+
+type UpdatePreferencesRequest struct {
+	Id    string   `thrift:"id,1,required" frugal:"1,required,string" json:"id"`
+	Items []string `thrift:"items,2,required" frugal:"2,required,list<string>" json:"items"`
+}
+
+func NewUpdatePreferencesRequest() *UpdatePreferencesRequest {
+	return &UpdatePreferencesRequest{}
+}
+
+func (p *UpdatePreferencesRequest) InitDefault() {
+}
+
+func (p *UpdatePreferencesRequest) GetId() (v string) {
+	return p.Id
+}
+
+func (p *UpdatePreferencesRequest) GetItems() (v []string) {
+	return p.Items
+}
+func (p *UpdatePreferencesRequest) SetId(val string) {
+	p.Id = val
+}
+func (p *UpdatePreferencesRequest) SetItems(val []string) {
+	p.Items = val
+}
+
+func (p *UpdatePreferencesRequest) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("UpdatePreferencesRequest(%+v)", *p)
+}
+
+var fieldIDToName_UpdatePreferencesRequest = map[int16]string{
+	1: "id",
+	2: "items",
+}
+
+type UpdatePreferencesResponse struct {
+	BaseResp    *base.BaseResp   `thrift:"baseResp,1,required" frugal:"1,required,base.BaseResp" json:"baseResp"`
+	Preferences *UserPreferences `thrift:"preferences,2,optional" frugal:"2,optional,UserPreferences" json:"preferences,omitempty"`
+}
+
+func NewUpdatePreferencesResponse() *UpdatePreferencesResponse {
+	return &UpdatePreferencesResponse{}
+}
+
+func (p *UpdatePreferencesResponse) InitDefault() {
+}
+
+var UpdatePreferencesResponse_BaseResp_DEFAULT *base.BaseResp
+
+func (p *UpdatePreferencesResponse) GetBaseResp() (v *base.BaseResp) {
+	if !p.IsSetBaseResp() {
+		return UpdatePreferencesResponse_BaseResp_DEFAULT
+	}
+	return p.BaseResp
+}
+
+var UpdatePreferencesResponse_Preferences_DEFAULT *UserPreferences
+
+func (p *UpdatePreferencesResponse) GetPreferences() (v *UserPreferences) {
+	if !p.IsSetPreferences() {
+		return UpdatePreferencesResponse_Preferences_DEFAULT
+	}
+	return p.Preferences
+}
+func (p *UpdatePreferencesResponse) SetBaseResp(val *base.BaseResp) {
+	p.BaseResp = val
+}
+func (p *UpdatePreferencesResponse) SetPreferences(val *UserPreferences) {
+	p.Preferences = val
+}
+
+func (p *UpdatePreferencesResponse) IsSetBaseResp() bool {
+	return p.BaseResp != nil
+}
+
+func (p *UpdatePreferencesResponse) IsSetPreferences() bool {
+	return p.Preferences != nil
+}
+
+func (p *UpdatePreferencesResponse) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("UpdatePreferencesResponse(%+v)", *p)
+}
+
+var fieldIDToName_UpdatePreferencesResponse = map[int16]string{
+	1: "baseResp",
+	2: "preferences",
+}
+
+type GetSettingsRequest struct {
+	Id string `thrift:"id,1,required" frugal:"1,required,string" json:"id"`
+}
+
+func NewGetSettingsRequest() *GetSettingsRequest {
+	return &GetSettingsRequest{}
+}
+
+func (p *GetSettingsRequest) InitDefault() {
+}
+
+func (p *GetSettingsRequest) GetId() (v string) {
+	return p.Id
+}
+func (p *GetSettingsRequest) SetId(val string) {
+	p.Id = val
+}
+
+func (p *GetSettingsRequest) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("GetSettingsRequest(%+v)", *p)
+}
+
+var fieldIDToName_GetSettingsRequest = map[int16]string{
+	1: "id",
+}
+
+type GetSettingsResponse struct {
+	BaseResp *base.BaseResp `thrift:"baseResp,1,required" frugal:"1,required,base.BaseResp" json:"baseResp"`
+	Settings *UserSettings  `thrift:"settings,2,optional" frugal:"2,optional,UserSettings" json:"settings,omitempty"`
+}
+
+func NewGetSettingsResponse() *GetSettingsResponse {
+	return &GetSettingsResponse{}
+}
+
+func (p *GetSettingsResponse) InitDefault() {
+}
+
+var GetSettingsResponse_BaseResp_DEFAULT *base.BaseResp
+
+func (p *GetSettingsResponse) GetBaseResp() (v *base.BaseResp) {
+	if !p.IsSetBaseResp() {
+		return GetSettingsResponse_BaseResp_DEFAULT
+	}
+	return p.BaseResp
+}
+
+var GetSettingsResponse_Settings_DEFAULT *UserSettings
+
+func (p *GetSettingsResponse) GetSettings() (v *UserSettings) {
+	if !p.IsSetSettings() {
+		return GetSettingsResponse_Settings_DEFAULT
+	}
+	return p.Settings
+}
+func (p *GetSettingsResponse) SetBaseResp(val *base.BaseResp) {
+	p.BaseResp = val
+}
+func (p *GetSettingsResponse) SetSettings(val *UserSettings) {
+	p.Settings = val
+}
+
+func (p *GetSettingsResponse) IsSetBaseResp() bool {
+	return p.BaseResp != nil
+}
+
+func (p *GetSettingsResponse) IsSetSettings() bool {
+	return p.Settings != nil
+}
+
+func (p *GetSettingsResponse) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("GetSettingsResponse(%+v)", *p)
+}
+
+var fieldIDToName_GetSettingsResponse = map[int16]string{
+	1: "baseResp",
+	2: "settings",
+}
+
+type UpdateSettingsRequest struct {
+	Id                           string `thrift:"id,1,required" frugal:"1,required,string" json:"id"`
+	TripReminderEnabled          bool   `thrift:"tripReminderEnabled,2,required" frugal:"2,required,bool" json:"tripReminderEnabled"`
+	PriceReminderEnabled         bool   `thrift:"priceReminderEnabled,3,required" frugal:"3,required,bool" json:"priceReminderEnabled"`
+	PersonalizedRecommendEnabled bool   `thrift:"personalizedRecommendEnabled,4,required" frugal:"4,required,bool" json:"personalizedRecommendEnabled"`
+}
+
+func NewUpdateSettingsRequest() *UpdateSettingsRequest {
+	return &UpdateSettingsRequest{}
+}
+
+func (p *UpdateSettingsRequest) InitDefault() {
+}
+
+func (p *UpdateSettingsRequest) GetId() (v string) {
+	return p.Id
+}
+
+func (p *UpdateSettingsRequest) GetTripReminderEnabled() (v bool) {
+	return p.TripReminderEnabled
+}
+
+func (p *UpdateSettingsRequest) GetPriceReminderEnabled() (v bool) {
+	return p.PriceReminderEnabled
+}
+
+func (p *UpdateSettingsRequest) GetPersonalizedRecommendEnabled() (v bool) {
+	return p.PersonalizedRecommendEnabled
+}
+func (p *UpdateSettingsRequest) SetId(val string) {
+	p.Id = val
+}
+func (p *UpdateSettingsRequest) SetTripReminderEnabled(val bool) {
+	p.TripReminderEnabled = val
+}
+func (p *UpdateSettingsRequest) SetPriceReminderEnabled(val bool) {
+	p.PriceReminderEnabled = val
+}
+func (p *UpdateSettingsRequest) SetPersonalizedRecommendEnabled(val bool) {
+	p.PersonalizedRecommendEnabled = val
+}
+
+func (p *UpdateSettingsRequest) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("UpdateSettingsRequest(%+v)", *p)
+}
+
+var fieldIDToName_UpdateSettingsRequest = map[int16]string{
+	1: "id",
+	2: "tripReminderEnabled",
+	3: "priceReminderEnabled",
+	4: "personalizedRecommendEnabled",
+}
+
+type UpdateSettingsResponse struct {
+	BaseResp *base.BaseResp `thrift:"baseResp,1,required" frugal:"1,required,base.BaseResp" json:"baseResp"`
+	Settings *UserSettings  `thrift:"settings,2,optional" frugal:"2,optional,UserSettings" json:"settings,omitempty"`
+}
+
+func NewUpdateSettingsResponse() *UpdateSettingsResponse {
+	return &UpdateSettingsResponse{}
+}
+
+func (p *UpdateSettingsResponse) InitDefault() {
+}
+
+var UpdateSettingsResponse_BaseResp_DEFAULT *base.BaseResp
+
+func (p *UpdateSettingsResponse) GetBaseResp() (v *base.BaseResp) {
+	if !p.IsSetBaseResp() {
+		return UpdateSettingsResponse_BaseResp_DEFAULT
+	}
+	return p.BaseResp
+}
+
+var UpdateSettingsResponse_Settings_DEFAULT *UserSettings
+
+func (p *UpdateSettingsResponse) GetSettings() (v *UserSettings) {
+	if !p.IsSetSettings() {
+		return UpdateSettingsResponse_Settings_DEFAULT
+	}
+	return p.Settings
+}
+func (p *UpdateSettingsResponse) SetBaseResp(val *base.BaseResp) {
+	p.BaseResp = val
+}
+func (p *UpdateSettingsResponse) SetSettings(val *UserSettings) {
+	p.Settings = val
+}
+
+func (p *UpdateSettingsResponse) IsSetBaseResp() bool {
+	return p.BaseResp != nil
+}
+
+func (p *UpdateSettingsResponse) IsSetSettings() bool {
+	return p.Settings != nil
+}
+
+func (p *UpdateSettingsResponse) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("UpdateSettingsResponse(%+v)", *p)
+}
+
+var fieldIDToName_UpdateSettingsResponse = map[int16]string{
+	1: "baseResp",
+	2: "settings",
+}
+
 type UserService interface {
 	Register(ctx context.Context, req *RegisterRequest) (r *RegisterResponse, err error)
 
@@ -709,6 +1394,16 @@ type UserService interface {
 	GetProfile(ctx context.Context, req *GetProfileRequest) (r *GetProfileResponse, err error)
 
 	UpdateProfile(ctx context.Context, req *UpdateProfileRequest) (r *UpdateProfileResponse, err error)
+
+	GetDashboard(ctx context.Context, req *GetDashboardRequest) (r *GetDashboardResponse, err error)
+
+	GetPreferences(ctx context.Context, req *GetPreferencesRequest) (r *GetPreferencesResponse, err error)
+
+	UpdatePreferences(ctx context.Context, req *UpdatePreferencesRequest) (r *UpdatePreferencesResponse, err error)
+
+	GetSettings(ctx context.Context, req *GetSettingsRequest) (r *GetSettingsResponse, err error)
+
+	UpdateSettings(ctx context.Context, req *UpdateSettingsRequest) (r *UpdateSettingsResponse, err error)
 }
 
 type UserServiceRegisterArgs struct {
@@ -1012,5 +1707,385 @@ func (p *UserServiceUpdateProfileResult) String() string {
 }
 
 var fieldIDToName_UserServiceUpdateProfileResult = map[int16]string{
+	0: "success",
+}
+
+type UserServiceGetDashboardArgs struct {
+	Req *GetDashboardRequest `thrift:"req,1" frugal:"1,default,GetDashboardRequest" json:"req"`
+}
+
+func NewUserServiceGetDashboardArgs() *UserServiceGetDashboardArgs {
+	return &UserServiceGetDashboardArgs{}
+}
+
+func (p *UserServiceGetDashboardArgs) InitDefault() {
+}
+
+var UserServiceGetDashboardArgs_Req_DEFAULT *GetDashboardRequest
+
+func (p *UserServiceGetDashboardArgs) GetReq() (v *GetDashboardRequest) {
+	if !p.IsSetReq() {
+		return UserServiceGetDashboardArgs_Req_DEFAULT
+	}
+	return p.Req
+}
+func (p *UserServiceGetDashboardArgs) SetReq(val *GetDashboardRequest) {
+	p.Req = val
+}
+
+func (p *UserServiceGetDashboardArgs) IsSetReq() bool {
+	return p.Req != nil
+}
+
+func (p *UserServiceGetDashboardArgs) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("UserServiceGetDashboardArgs(%+v)", *p)
+}
+
+var fieldIDToName_UserServiceGetDashboardArgs = map[int16]string{
+	1: "req",
+}
+
+type UserServiceGetDashboardResult struct {
+	Success *GetDashboardResponse `thrift:"success,0,optional" frugal:"0,optional,GetDashboardResponse" json:"success,omitempty"`
+}
+
+func NewUserServiceGetDashboardResult() *UserServiceGetDashboardResult {
+	return &UserServiceGetDashboardResult{}
+}
+
+func (p *UserServiceGetDashboardResult) InitDefault() {
+}
+
+var UserServiceGetDashboardResult_Success_DEFAULT *GetDashboardResponse
+
+func (p *UserServiceGetDashboardResult) GetSuccess() (v *GetDashboardResponse) {
+	if !p.IsSetSuccess() {
+		return UserServiceGetDashboardResult_Success_DEFAULT
+	}
+	return p.Success
+}
+func (p *UserServiceGetDashboardResult) SetSuccess(x interface{}) {
+	p.Success = x.(*GetDashboardResponse)
+}
+
+func (p *UserServiceGetDashboardResult) IsSetSuccess() bool {
+	return p.Success != nil
+}
+
+func (p *UserServiceGetDashboardResult) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("UserServiceGetDashboardResult(%+v)", *p)
+}
+
+var fieldIDToName_UserServiceGetDashboardResult = map[int16]string{
+	0: "success",
+}
+
+type UserServiceGetPreferencesArgs struct {
+	Req *GetPreferencesRequest `thrift:"req,1" frugal:"1,default,GetPreferencesRequest" json:"req"`
+}
+
+func NewUserServiceGetPreferencesArgs() *UserServiceGetPreferencesArgs {
+	return &UserServiceGetPreferencesArgs{}
+}
+
+func (p *UserServiceGetPreferencesArgs) InitDefault() {
+}
+
+var UserServiceGetPreferencesArgs_Req_DEFAULT *GetPreferencesRequest
+
+func (p *UserServiceGetPreferencesArgs) GetReq() (v *GetPreferencesRequest) {
+	if !p.IsSetReq() {
+		return UserServiceGetPreferencesArgs_Req_DEFAULT
+	}
+	return p.Req
+}
+func (p *UserServiceGetPreferencesArgs) SetReq(val *GetPreferencesRequest) {
+	p.Req = val
+}
+
+func (p *UserServiceGetPreferencesArgs) IsSetReq() bool {
+	return p.Req != nil
+}
+
+func (p *UserServiceGetPreferencesArgs) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("UserServiceGetPreferencesArgs(%+v)", *p)
+}
+
+var fieldIDToName_UserServiceGetPreferencesArgs = map[int16]string{
+	1: "req",
+}
+
+type UserServiceGetPreferencesResult struct {
+	Success *GetPreferencesResponse `thrift:"success,0,optional" frugal:"0,optional,GetPreferencesResponse" json:"success,omitempty"`
+}
+
+func NewUserServiceGetPreferencesResult() *UserServiceGetPreferencesResult {
+	return &UserServiceGetPreferencesResult{}
+}
+
+func (p *UserServiceGetPreferencesResult) InitDefault() {
+}
+
+var UserServiceGetPreferencesResult_Success_DEFAULT *GetPreferencesResponse
+
+func (p *UserServiceGetPreferencesResult) GetSuccess() (v *GetPreferencesResponse) {
+	if !p.IsSetSuccess() {
+		return UserServiceGetPreferencesResult_Success_DEFAULT
+	}
+	return p.Success
+}
+func (p *UserServiceGetPreferencesResult) SetSuccess(x interface{}) {
+	p.Success = x.(*GetPreferencesResponse)
+}
+
+func (p *UserServiceGetPreferencesResult) IsSetSuccess() bool {
+	return p.Success != nil
+}
+
+func (p *UserServiceGetPreferencesResult) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("UserServiceGetPreferencesResult(%+v)", *p)
+}
+
+var fieldIDToName_UserServiceGetPreferencesResult = map[int16]string{
+	0: "success",
+}
+
+type UserServiceUpdatePreferencesArgs struct {
+	Req *UpdatePreferencesRequest `thrift:"req,1" frugal:"1,default,UpdatePreferencesRequest" json:"req"`
+}
+
+func NewUserServiceUpdatePreferencesArgs() *UserServiceUpdatePreferencesArgs {
+	return &UserServiceUpdatePreferencesArgs{}
+}
+
+func (p *UserServiceUpdatePreferencesArgs) InitDefault() {
+}
+
+var UserServiceUpdatePreferencesArgs_Req_DEFAULT *UpdatePreferencesRequest
+
+func (p *UserServiceUpdatePreferencesArgs) GetReq() (v *UpdatePreferencesRequest) {
+	if !p.IsSetReq() {
+		return UserServiceUpdatePreferencesArgs_Req_DEFAULT
+	}
+	return p.Req
+}
+func (p *UserServiceUpdatePreferencesArgs) SetReq(val *UpdatePreferencesRequest) {
+	p.Req = val
+}
+
+func (p *UserServiceUpdatePreferencesArgs) IsSetReq() bool {
+	return p.Req != nil
+}
+
+func (p *UserServiceUpdatePreferencesArgs) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("UserServiceUpdatePreferencesArgs(%+v)", *p)
+}
+
+var fieldIDToName_UserServiceUpdatePreferencesArgs = map[int16]string{
+	1: "req",
+}
+
+type UserServiceUpdatePreferencesResult struct {
+	Success *UpdatePreferencesResponse `thrift:"success,0,optional" frugal:"0,optional,UpdatePreferencesResponse" json:"success,omitempty"`
+}
+
+func NewUserServiceUpdatePreferencesResult() *UserServiceUpdatePreferencesResult {
+	return &UserServiceUpdatePreferencesResult{}
+}
+
+func (p *UserServiceUpdatePreferencesResult) InitDefault() {
+}
+
+var UserServiceUpdatePreferencesResult_Success_DEFAULT *UpdatePreferencesResponse
+
+func (p *UserServiceUpdatePreferencesResult) GetSuccess() (v *UpdatePreferencesResponse) {
+	if !p.IsSetSuccess() {
+		return UserServiceUpdatePreferencesResult_Success_DEFAULT
+	}
+	return p.Success
+}
+func (p *UserServiceUpdatePreferencesResult) SetSuccess(x interface{}) {
+	p.Success = x.(*UpdatePreferencesResponse)
+}
+
+func (p *UserServiceUpdatePreferencesResult) IsSetSuccess() bool {
+	return p.Success != nil
+}
+
+func (p *UserServiceUpdatePreferencesResult) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("UserServiceUpdatePreferencesResult(%+v)", *p)
+}
+
+var fieldIDToName_UserServiceUpdatePreferencesResult = map[int16]string{
+	0: "success",
+}
+
+type UserServiceGetSettingsArgs struct {
+	Req *GetSettingsRequest `thrift:"req,1" frugal:"1,default,GetSettingsRequest" json:"req"`
+}
+
+func NewUserServiceGetSettingsArgs() *UserServiceGetSettingsArgs {
+	return &UserServiceGetSettingsArgs{}
+}
+
+func (p *UserServiceGetSettingsArgs) InitDefault() {
+}
+
+var UserServiceGetSettingsArgs_Req_DEFAULT *GetSettingsRequest
+
+func (p *UserServiceGetSettingsArgs) GetReq() (v *GetSettingsRequest) {
+	if !p.IsSetReq() {
+		return UserServiceGetSettingsArgs_Req_DEFAULT
+	}
+	return p.Req
+}
+func (p *UserServiceGetSettingsArgs) SetReq(val *GetSettingsRequest) {
+	p.Req = val
+}
+
+func (p *UserServiceGetSettingsArgs) IsSetReq() bool {
+	return p.Req != nil
+}
+
+func (p *UserServiceGetSettingsArgs) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("UserServiceGetSettingsArgs(%+v)", *p)
+}
+
+var fieldIDToName_UserServiceGetSettingsArgs = map[int16]string{
+	1: "req",
+}
+
+type UserServiceGetSettingsResult struct {
+	Success *GetSettingsResponse `thrift:"success,0,optional" frugal:"0,optional,GetSettingsResponse" json:"success,omitempty"`
+}
+
+func NewUserServiceGetSettingsResult() *UserServiceGetSettingsResult {
+	return &UserServiceGetSettingsResult{}
+}
+
+func (p *UserServiceGetSettingsResult) InitDefault() {
+}
+
+var UserServiceGetSettingsResult_Success_DEFAULT *GetSettingsResponse
+
+func (p *UserServiceGetSettingsResult) GetSuccess() (v *GetSettingsResponse) {
+	if !p.IsSetSuccess() {
+		return UserServiceGetSettingsResult_Success_DEFAULT
+	}
+	return p.Success
+}
+func (p *UserServiceGetSettingsResult) SetSuccess(x interface{}) {
+	p.Success = x.(*GetSettingsResponse)
+}
+
+func (p *UserServiceGetSettingsResult) IsSetSuccess() bool {
+	return p.Success != nil
+}
+
+func (p *UserServiceGetSettingsResult) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("UserServiceGetSettingsResult(%+v)", *p)
+}
+
+var fieldIDToName_UserServiceGetSettingsResult = map[int16]string{
+	0: "success",
+}
+
+type UserServiceUpdateSettingsArgs struct {
+	Req *UpdateSettingsRequest `thrift:"req,1" frugal:"1,default,UpdateSettingsRequest" json:"req"`
+}
+
+func NewUserServiceUpdateSettingsArgs() *UserServiceUpdateSettingsArgs {
+	return &UserServiceUpdateSettingsArgs{}
+}
+
+func (p *UserServiceUpdateSettingsArgs) InitDefault() {
+}
+
+var UserServiceUpdateSettingsArgs_Req_DEFAULT *UpdateSettingsRequest
+
+func (p *UserServiceUpdateSettingsArgs) GetReq() (v *UpdateSettingsRequest) {
+	if !p.IsSetReq() {
+		return UserServiceUpdateSettingsArgs_Req_DEFAULT
+	}
+	return p.Req
+}
+func (p *UserServiceUpdateSettingsArgs) SetReq(val *UpdateSettingsRequest) {
+	p.Req = val
+}
+
+func (p *UserServiceUpdateSettingsArgs) IsSetReq() bool {
+	return p.Req != nil
+}
+
+func (p *UserServiceUpdateSettingsArgs) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("UserServiceUpdateSettingsArgs(%+v)", *p)
+}
+
+var fieldIDToName_UserServiceUpdateSettingsArgs = map[int16]string{
+	1: "req",
+}
+
+type UserServiceUpdateSettingsResult struct {
+	Success *UpdateSettingsResponse `thrift:"success,0,optional" frugal:"0,optional,UpdateSettingsResponse" json:"success,omitempty"`
+}
+
+func NewUserServiceUpdateSettingsResult() *UserServiceUpdateSettingsResult {
+	return &UserServiceUpdateSettingsResult{}
+}
+
+func (p *UserServiceUpdateSettingsResult) InitDefault() {
+}
+
+var UserServiceUpdateSettingsResult_Success_DEFAULT *UpdateSettingsResponse
+
+func (p *UserServiceUpdateSettingsResult) GetSuccess() (v *UpdateSettingsResponse) {
+	if !p.IsSetSuccess() {
+		return UserServiceUpdateSettingsResult_Success_DEFAULT
+	}
+	return p.Success
+}
+func (p *UserServiceUpdateSettingsResult) SetSuccess(x interface{}) {
+	p.Success = x.(*UpdateSettingsResponse)
+}
+
+func (p *UserServiceUpdateSettingsResult) IsSetSuccess() bool {
+	return p.Success != nil
+}
+
+func (p *UserServiceUpdateSettingsResult) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("UserServiceUpdateSettingsResult(%+v)", *p)
+}
+
+var fieldIDToName_UserServiceUpdateSettingsResult = map[int16]string{
 	0: "success",
 }

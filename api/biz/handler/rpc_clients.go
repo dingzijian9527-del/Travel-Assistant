@@ -6,6 +6,7 @@ import (
 
 	kitexclient "github.com/cloudwego/kitex/client"
 	aiagentservice "github.com/dingzijian9527-del/Travel-Assistant/kitex_gen/ai_agent/aiagentservice"
+	tripservice "github.com/dingzijian9527-del/Travel-Assistant/kitex_gen/trip/tripservice"
 	userservice "github.com/dingzijian9527-del/Travel-Assistant/kitex_gen/user/userservice"
 	"github.com/dingzijian9527-del/Travel-Assistant/pkg/bootstrap"
 )
@@ -13,6 +14,7 @@ import (
 type rpcClients struct {
 	user    userservice.Client
 	aiAgent aiagentservice.Client
+	trip    tripservice.Client
 }
 
 var gatewayClients sync.Map
@@ -21,7 +23,7 @@ func clientsFor(runtime *bootstrap.Runtime) (*rpcClients, error) {
 	if runtime == nil || runtime.Config == nil {
 		return nil, errors.New("runtime config is required")
 	}
-	cacheKey := runtime.Config.RPC.User.Target + "|" + runtime.Config.RPC.AIAgent.Target
+	cacheKey := runtime.Config.RPC.User.Target + "|" + runtime.Config.RPC.AIAgent.Target + "|" + runtime.Config.RPC.Trip.Target
 	if value, ok := gatewayClients.Load(cacheKey); ok {
 		return value.(*rpcClients), nil
 	}
@@ -33,7 +35,11 @@ func clientsFor(runtime *bootstrap.Runtime) (*rpcClients, error) {
 	if err != nil {
 		return nil, err
 	}
-	clients := &rpcClients{user: userClient, aiAgent: aiClient}
+	tripClient, err := tripservice.NewClient(runtime.Config.RPC.Trip.ServiceName, kitexclient.WithHostPorts(runtime.Config.RPC.Trip.Target))
+	if err != nil {
+		return nil, err
+	}
+	clients := &rpcClients{user: userClient, aiAgent: aiClient, trip: tripClient}
 	actual, _ := gatewayClients.LoadOrStore(cacheKey, clients)
 	return actual.(*rpcClients), nil
 }
