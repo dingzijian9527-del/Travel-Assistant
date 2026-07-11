@@ -9,8 +9,8 @@ import (
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
 	user "github.com/dingzijian9527-del/Travel-Assistant/kitex_gen/user"
+	"github.com/dingzijian9527-del/Travel-Assistant/api/biz/middleware"
 	"github.com/dingzijian9527-del/Travel-Assistant/pkg/bootstrap"
-	"github.com/dingzijian9527-del/Travel-Assistant/pkg/jwtx"
 	"github.com/dingzijian9527-del/Travel-Assistant/pkg/verifycodex"
 	"go.uber.org/zap"
 )
@@ -63,6 +63,10 @@ func RegisterUser(runtime *bootstrap.Runtime) app.HandlerFunc {
 		phone := normalizePhone(req.Phone)
 		if !validMainlandPhone(phone) {
 			writeJSON(c, consts.StatusBadRequest, 400, "手机号格式错误", nil)
+			return
+		}
+		if err := validatePassword(req.Password); err != nil {
+			writeJSON(c, consts.StatusBadRequest, 400, err.Error(), nil)
 			return
 		}
 		store, err := newRegisterCodeStore(runtime)
@@ -127,6 +131,10 @@ func LoginUser(runtime *bootstrap.Runtime) app.HandlerFunc {
 			writeJSON(c, consts.StatusBadRequest, 400, "请求参数错误", nil)
 			return
 		}
+		if err := validatePassword(req.Password); err != nil {
+			writeJSON(c, consts.StatusBadRequest, 400, err.Error(), nil)
+			return
+		}
 		clients, err := clientsFor(runtime)
 		if err != nil {
 			writeJSON(c, consts.StatusInternalServerError, 500, "用户服务暂不可用", nil)
@@ -147,8 +155,9 @@ func LoginUser(runtime *bootstrap.Runtime) app.HandlerFunc {
 
 func GetUserProfile(runtime *bootstrap.Runtime) app.HandlerFunc {
 	return func(ctx context.Context, c *app.RequestContext) {
-		claims, ok := claimsFromRequest(runtime, c)
+		claims, ok := middleware.AuthClaims(c)
 		if !ok {
+			writeJSON(c, consts.StatusUnauthorized, 401, "登录状态无效，请重新登录", nil)
 			return
 		}
 		clients, err := clientsFor(runtime)
@@ -167,8 +176,9 @@ func GetUserProfile(runtime *bootstrap.Runtime) app.HandlerFunc {
 
 func UpdateUserProfile(runtime *bootstrap.Runtime) app.HandlerFunc {
 	return func(ctx context.Context, c *app.RequestContext) {
-		claims, ok := claimsFromRequest(runtime, c)
+		claims, ok := middleware.AuthClaims(c)
 		if !ok {
+			writeJSON(c, consts.StatusUnauthorized, 401, "登录状态无效，请重新登录", nil)
 			return
 		}
 		var req updateProfileRequest
@@ -198,8 +208,9 @@ func UpdateUserProfile(runtime *bootstrap.Runtime) app.HandlerFunc {
 
 func GetUserDashboard(runtime *bootstrap.Runtime) app.HandlerFunc {
 	return func(ctx context.Context, c *app.RequestContext) {
-		claims, ok := claimsFromRequest(runtime, c)
+		claims, ok := middleware.AuthClaims(c)
 		if !ok {
+			writeJSON(c, consts.StatusUnauthorized, 401, "登录状态无效，请重新登录", nil)
 			return
 		}
 		clients, err := clientsFor(runtime)
@@ -218,8 +229,9 @@ func GetUserDashboard(runtime *bootstrap.Runtime) app.HandlerFunc {
 
 func GetUserPreferences(runtime *bootstrap.Runtime) app.HandlerFunc {
 	return func(ctx context.Context, c *app.RequestContext) {
-		claims, ok := claimsFromRequest(runtime, c)
+		claims, ok := middleware.AuthClaims(c)
 		if !ok {
+			writeJSON(c, consts.StatusUnauthorized, 401, "登录状态无效，请重新登录", nil)
 			return
 		}
 		clients, err := clientsFor(runtime)
@@ -238,8 +250,9 @@ func GetUserPreferences(runtime *bootstrap.Runtime) app.HandlerFunc {
 
 func UpdateUserPreferences(runtime *bootstrap.Runtime) app.HandlerFunc {
 	return func(ctx context.Context, c *app.RequestContext) {
-		claims, ok := claimsFromRequest(runtime, c)
+		claims, ok := middleware.AuthClaims(c)
 		if !ok {
+			writeJSON(c, consts.StatusUnauthorized, 401, "登录状态无效，请重新登录", nil)
 			return
 		}
 		var req updatePreferencesRequest
@@ -266,8 +279,9 @@ func UpdateUserPreferences(runtime *bootstrap.Runtime) app.HandlerFunc {
 
 func GetUserSettings(runtime *bootstrap.Runtime) app.HandlerFunc {
 	return func(ctx context.Context, c *app.RequestContext) {
-		claims, ok := claimsFromRequest(runtime, c)
+		claims, ok := middleware.AuthClaims(c)
 		if !ok {
+			writeJSON(c, consts.StatusUnauthorized, 401, "登录状态无效，请重新登录", nil)
 			return
 		}
 		clients, err := clientsFor(runtime)
@@ -286,8 +300,9 @@ func GetUserSettings(runtime *bootstrap.Runtime) app.HandlerFunc {
 
 func UpdateUserSettings(runtime *bootstrap.Runtime) app.HandlerFunc {
 	return func(ctx context.Context, c *app.RequestContext) {
-		claims, ok := claimsFromRequest(runtime, c)
+		claims, ok := middleware.AuthClaims(c)
 		if !ok {
+			writeJSON(c, consts.StatusUnauthorized, 401, "登录状态无效，请重新登录", nil)
 			return
 		}
 		var req updateSettingsRequest
@@ -312,24 +327,6 @@ func UpdateUserSettings(runtime *bootstrap.Runtime) app.HandlerFunc {
 		}
 		writeRPCResponse(c, resp.GetBaseResp().GetCode(), resp.GetBaseResp().GetMsg(), resp.GetSettings())
 	}
-}
-
-func claimsFromRequest(runtime *bootstrap.Runtime, c *app.RequestContext) (jwtx.Claims, bool) {
-	token := bearerToken(string(c.Request.Header.Peek("Authorization")))
-	claims, err := jwtx.Parse(jwtx.Config{Secret: runtime.Config.Auth.JWTSecret, Expire: runtime.Config.Auth.JWTExpire}, token)
-	if err != nil {
-		writeJSON(c, consts.StatusUnauthorized, 401, "登录状态无效，请重新登录", nil)
-		return jwtx.Claims{}, false
-	}
-	return claims, true
-}
-
-func bearerToken(authorization string) string {
-	parts := strings.Fields(authorization)
-	if len(parts) == 2 && strings.EqualFold(parts[0], "Bearer") {
-		return parts[1]
-	}
-	return ""
 }
 
 func optionalRequestString(value string) *string {

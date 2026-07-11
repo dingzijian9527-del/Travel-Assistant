@@ -9,6 +9,7 @@ import (
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
 	"go.uber.org/zap"
 
+	"github.com/dingzijian9527-del/Travel-Assistant/api/biz/middleware"
 	apiupload "github.com/dingzijian9527-del/Travel-Assistant/api/biz/utils/upload"
 	"github.com/dingzijian9527-del/Travel-Assistant/pkg/bootstrap"
 	"github.com/dingzijian9527-del/Travel-Assistant/pkg/uploadx"
@@ -16,7 +17,7 @@ import (
 
 func UploadAvatar(runtime *bootstrap.Runtime) app.HandlerFunc {
 	return func(ctx context.Context, c *app.RequestContext) {
-		if _, ok := claimsFromRequest(runtime, c); !ok {
+		if _, ok := middleware.AuthClaims(c); !ok {
 			return
 		}
 

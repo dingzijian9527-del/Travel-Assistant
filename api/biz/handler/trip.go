@@ -6,6 +6,7 @@ import (
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
 	trip "github.com/dingzijian9527-del/Travel-Assistant/kitex_gen/trip"
+	"github.com/dingzijian9527-del/Travel-Assistant/api/biz/middleware"
 	"github.com/dingzijian9527-del/Travel-Assistant/pkg/bootstrap"
 	"github.com/dingzijian9527-del/Travel-Assistant/pkg/jwtx"
 )
@@ -160,8 +161,9 @@ func DeleteTrip(runtime *bootstrap.Runtime) app.HandlerFunc {
 }
 
 func tripUserIDFromRequest(runtime *bootstrap.Runtime, c *app.RequestContext) (int64, bool) {
-	claims, ok := claimsFromRequest(runtime, c)
+	claims, ok := middleware.AuthClaims(c)
 	if !ok {
+		writeJSON(c, consts.StatusUnauthorized, 401, "登录状态无效，请重新登录", nil)
 		return 0, false
 	}
 	userID, err := jwtx.UserIDInt64(claims.UserID)

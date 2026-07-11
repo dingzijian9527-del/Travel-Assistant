@@ -9,6 +9,7 @@ import (
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
 	"go.uber.org/zap"
 
+	"github.com/dingzijian9527-del/Travel-Assistant/api/biz/middleware"
 	"github.com/dingzijian9527-del/Travel-Assistant/api/biz/validator"
 	"github.com/dingzijian9527-del/Travel-Assistant/pkg/bootstrap"
 	"github.com/dingzijian9527-del/Travel-Assistant/pkg/jwtx"
@@ -41,7 +42,7 @@ func ChatStream(runtime *bootstrap.Runtime) app.HandlerFunc {
 			return
 		}
 
-		claims, ok := claimsFromRequest(runtime, c)
+		claims, ok := middleware.AuthClaims(c)
 		if !ok {
 			return
 		}
