@@ -25,9 +25,6 @@ func newUserService(repo userRepository) *userService {
 }
 
 func newUserServiceWithAuth(repo userRepository, auth config.AuthConfig) *userService {
-	if auth.JWTSecret == "" {
-		auth.JWTSecret = "travel-assistant-dev-secret"
-	}
 	if auth.JWTExpire <= 0 {
 		auth.JWTExpire = 24 * time.Hour
 	}
