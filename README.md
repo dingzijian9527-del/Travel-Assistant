@@ -53,3 +53,29 @@ IDL 文件：`idl/ai_agent.thrift`
 go test ./...
 ```
 
+## 本地启动前准备
+
+1. 复制配置模板：
+
+```bash
+cp conf/config.yaml.tpl conf/config.yaml
+```
+
+2. 最低可运行配置（不依赖任何第三方服务）：
+
+`conf/config.yaml` 保留模板默认占位值即可启动网关和前端页面，智能体回复和短信发送等功能不可用，但不影响本地开发调试。
+
+3. 如需启用智能体回复，在 `conf/config.yaml` 中填入 `ai.api_key` 和 `ai.endpoint_id`。
+
+4. 启动后端网关：
+
+```bash
+go run ./cmd/api
+```
+
+5. 启动前端：
+
+```bash
+cd front && npm run dev:h5
+```
+

@@ -68,8 +68,8 @@ upload:
   qiniu:
     access_key: ""
     secret_key: ""
-    bucket: "dzj-travel"
-    url: "http://thvzlqvf1.hn-bkt.clouddn.com/"
+    bucket: ""
+    url: ""
     upload_host: "https://up-z2.qiniup.com"
 
 rag:

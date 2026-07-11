@@ -19,7 +19,7 @@ func TestLoadDefaultRAGConfig(t *testing.T) {
 	if cfg.RAG.Provider != "local" {
 		t.Fatalf("unexpected rag provider: %s", cfg.RAG.Provider)
 	}
-	if cfg.RAG.Address != "115.190.209.83:19530" {
+	if cfg.RAG.Address != "127.0.0.1:19530" {
 		t.Fatalf("unexpected rag address: %s", cfg.RAG.Address)
 	}
 	if cfg.RAG.CollectionName != "travel_knowledge" {

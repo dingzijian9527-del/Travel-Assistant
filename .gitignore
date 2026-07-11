@@ -20,4 +20,5 @@ front/dev-server.err.log
 
 # runtime generated files
 logs/
+runtime-logs/
 uploads/
