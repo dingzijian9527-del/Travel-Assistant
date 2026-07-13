@@ -17,6 +17,12 @@ front/dev-server.err.log
 # local environment
 .env
 *.local
+conf/config.local.yaml
+conf/*.local.yaml
+conf/*.override.yaml
+conf/config.local.yaml
+conf/*.local.yaml
+conf/*.override.yaml
 
 # runtime generated files
 logs/

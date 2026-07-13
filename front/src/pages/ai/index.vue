@@ -100,8 +100,8 @@ import BottomNav from "../../components/BottomNav.vue";
 import { createAiPageState } from "../../utils/aiPageState.js";
 import { shouldOfferTripCreation } from "../../utils/aiPlanIntent.js";
 import { createTripPageState } from "../../utils/tripPageState.js";
+import { apiBase } from "../../utils/runtime.js";
 
-const apiBase = "http://127.0.0.1:8080";
 const chatStreamUrl = `${apiBase}/api/v1/ai-stream`;
 const createTripUrl = `${apiBase}/api/v1/trips`;
 const pageState = createAiPageState();

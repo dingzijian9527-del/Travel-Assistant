@@ -1,4 +1,4 @@
-﻿package handler
+package handler
 
 import (
 	"context"
@@ -8,8 +8,8 @@ import (
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
-	user "github.com/dingzijian9527-del/Travel-Assistant/kitex_gen/user"
 	"github.com/dingzijian9527-del/Travel-Assistant/api/biz/middleware"
+	user "github.com/dingzijian9527-del/Travel-Assistant/kitex_gen/user"
 	"github.com/dingzijian9527-del/Travel-Assistant/pkg/bootstrap"
 	"github.com/dingzijian9527-del/Travel-Assistant/pkg/verifycodex"
 	"go.uber.org/zap"
@@ -146,9 +146,11 @@ func LoginUser(runtime *bootstrap.Runtime) app.HandlerFunc {
 			return
 		}
 		if resp.GetBaseResp().GetCode() != 0 {
+			middleware.MarkLoginFailure(c)
 			writeJSON(c, consts.StatusOK, resp.GetBaseResp().GetCode(), resp.GetBaseResp().GetMsg(), nil)
 			return
 		}
+		middleware.MarkLoginSuccess(c)
 		writeJSON(c, consts.StatusOK, 0, "success", map[string]any{"token": resp.GetToken(), "user": resp.GetUser()})
 	}
 }

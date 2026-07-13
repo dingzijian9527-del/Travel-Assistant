@@ -13,6 +13,11 @@ import (
 	"time"
 )
 
+const (
+	TokenTypeAccess  = "access"
+	TokenTypeRefresh = "refresh"
+)
+
 // Config 描述令牌签名和过期时间。
 type Config struct {
 	Secret string
@@ -21,10 +26,11 @@ type Config struct {
 
 // Claims 描述旅行助手登录态中的用户身份。
 type Claims struct {
-	UserID string
-	Phone  string
-	Role   string
-	Expire int64
+	UserID    string
+	Phone     string
+	Role      string
+	Expire    int64
+	TokenType string
 }
 
 type jwtHeader struct {
@@ -33,14 +39,36 @@ type jwtHeader struct {
 }
 
 type jwtPayload struct {
-	UserID string `json:"user_id"`
-	Phone  string `json:"phone,omitempty"`
-	Role   string `json:"role,omitempty"`
-	Expire int64  `json:"exp"`
+	UserID    string `json:"user_id"`
+	Phone     string `json:"phone,omitempty"`
+	Role      string `json:"role,omitempty"`
+	Expire    int64  `json:"exp"`
+	TokenType string `json:"token_type"`
 }
 
 // Generate 生成使用 HS256 签名的令牌。
 func Generate(cfg Config, claims Claims) (string, error) {
+	return generate(cfg, claims, TokenTypeAccess)
+}
+
+func GenerateRefresh(cfg Config, claims Claims, expire time.Duration) (string, error) {
+	cfg.Expire = expire
+	return generate(cfg, claims, TokenTypeRefresh)
+}
+
+func GeneratePair(cfg Config, claims Claims, refreshExpire time.Duration) (string, string, error) {
+	access, err := Generate(cfg, claims)
+	if err != nil {
+		return "", "", err
+	}
+	refresh, err := GenerateRefresh(cfg, claims, refreshExpire)
+	if err != nil {
+		return "", "", err
+	}
+	return access, refresh, nil
+}
+
+func generate(cfg Config, claims Claims, tokenType string) (string, error) {
 	if strings.TrimSpace(cfg.Secret) == "" {
 		return "", errors.New("jwt secret is required")
 	}
@@ -52,7 +80,7 @@ func Generate(cfg Config, claims Claims) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	payloadPart, err := encodeJSON(jwtPayload{UserID: claims.UserID, Phone: claims.Phone, Role: claims.Role, Expire: claims.Expire})
+	payloadPart, err := encodeJSON(jwtPayload{UserID: claims.UserID, Phone: claims.Phone, Role: claims.Role, Expire: claims.Expire, TokenType: tokenType})
 	if err != nil {
 		return "", err
 	}
@@ -62,6 +90,14 @@ func Generate(cfg Config, claims Claims) (string, error) {
 
 // Parse 校验令牌签名和过期时间，并返回用户身份。
 func Parse(cfg Config, token string) (Claims, error) {
+	return parseWithType(cfg, token, TokenTypeAccess)
+}
+
+func ParseRefresh(cfg Config, token string) (Claims, error) {
+	return parseWithType(cfg, token, TokenTypeRefresh)
+}
+
+func parseWithType(cfg Config, token string, expectedType string) (Claims, error) {
 	if strings.TrimSpace(cfg.Secret) == "" {
 		return Claims{}, errors.New("jwt secret is required")
 	}
@@ -80,10 +116,13 @@ func Parse(cfg Config, token string) (Claims, error) {
 	if payload.UserID == "" {
 		return Claims{}, errors.New("jwt user id is required")
 	}
+	if payload.TokenType != expectedType {
+		return Claims{}, errors.New("jwt token type is invalid")
+	}
 	if payload.Expire <= time.Now().Unix() {
 		return Claims{}, errors.New("jwt expired")
 	}
-	return Claims{UserID: payload.UserID, Phone: payload.Phone, Role: payload.Role, Expire: payload.Expire}, nil
+	return Claims{UserID: payload.UserID, Phone: payload.Phone, Role: payload.Role, Expire: payload.Expire, TokenType: payload.TokenType}, nil
 }
 
 func encodeJSON(value any) (string, error) {

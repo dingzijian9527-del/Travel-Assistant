@@ -24,7 +24,7 @@ type loginAttempt struct {
 
 // LoginRateLimit 限制同一手机号的登录失败频率，超出后返回统一错误。
 // 生产环境应改用 Redis 实现跨进程共享。
-func LoginRateLimit() app.HandlerFunc {
+func legacyLoginRateLimit() app.HandlerFunc {
 	mu := &sync.Mutex{}
 	attempts := map[string]*loginAttempt{}
 

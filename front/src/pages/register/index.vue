@@ -31,11 +31,11 @@
 
 <script setup>
 import { ref } from "vue";
+import { apiBase } from "../../utils/runtime.js";
 const phone = ref("");
 const code = ref("");
 const password = ref("");
 const sendingCode = ref(false);
-const apiBase = "http://127.0.0.1:8080";
 function goBack() { uni.navigateBack(); }
 async function sendCode() {
   const mobile = phone.value.trim();
