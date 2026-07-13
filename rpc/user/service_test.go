@@ -1,4 +1,4 @@
-﻿package rpcuser
+package rpcuser
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"time"
 
 	user "github.com/dingzijian9527-del/Travel-Assistant/kitex_gen/user"
+	"github.com/dingzijian9527-del/Travel-Assistant/pkg/config"
 	"github.com/dingzijian9527-del/Travel-Assistant/pkg/jwtx"
 )
 
@@ -154,6 +155,16 @@ func TestUserServiceDashboardPreferencesAndSettings(t *testing.T) {
 	}
 	if dashboard.Stats == nil || dashboard.Stats.TripCount != 0 {
 		t.Fatalf("unexpected dashboard stats: %#v", dashboard.Stats)
+	}
+}
+
+func TestNewUserServiceWithAuthDoesNotInjectHardcodedJWTSecret(t *testing.T) {
+	service := newUserServiceWithAuth(newUserRepo(), config.AuthConfig{})
+	if service.auth.JWTSecret != "" {
+		t.Fatalf("jwt secret should stay empty when caller does not provide one, got: %q", service.auth.JWTSecret)
+	}
+	if service.auth.JWTExpire != 24*time.Hour {
+		t.Fatalf("jwt expire should still fallback to 24h, got: %s", service.auth.JWTExpire)
 	}
 }
 
