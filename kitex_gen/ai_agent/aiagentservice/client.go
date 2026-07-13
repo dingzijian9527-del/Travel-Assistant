@@ -6,23 +6,31 @@ import (
 	"context"
 	client "github.com/cloudwego/kitex/client"
 	callopt "github.com/cloudwego/kitex/client/callopt"
+	streamcall "github.com/cloudwego/kitex/client/callopt/streamcall"
+	streaming "github.com/cloudwego/kitex/pkg/streaming"
+	transport "github.com/cloudwego/kitex/transport"
 	ai_agent "github.com/dingzijian9527-del/Travel-Assistant/kitex_gen/ai_agent"
 )
 
 // Client is designed to provide IDL-compatible methods with call-option parameter for kitex framework.
 type Client interface {
 	Chat(ctx context.Context, req *ai_agent.ChatRequest, callOptions ...callopt.Option) (r *ai_agent.ChatResponse, err error)
+	ChatStream(ctx context.Context, req *ai_agent.ChatRequest, callOptions ...streamcall.Option) (stream AIAgentService_ChatStreamClient, err error)
 	GetPromptSuggestions(ctx context.Context, req *ai_agent.PromptSuggestionsRequest, callOptions ...callopt.Option) (r *ai_agent.PromptSuggestionsResponse, err error)
 }
+
+type AIAgentService_ChatStreamClient streaming.ServerStreamingClient[ai_agent.ChatStreamChunk]
 
 // NewClient creates a client for the service defined in IDL.
 func NewClient(destService string, opts ...client.Option) (Client, error) {
 	var options []client.Option
 	options = append(options, client.WithDestService(destService))
 
+	options = append(options, client.WithTransportProtocol(transport.TTHeaderStreaming))
+
 	options = append(options, opts...)
 
-	kc, err := client.NewClient(serviceInfoForClient(), options...)
+	kc, err := client.NewClient(serviceInfo(), options...)
 	if err != nil {
 		return nil, err
 	}
@@ -47,6 +55,11 @@ type kAIAgentServiceClient struct {
 func (p *kAIAgentServiceClient) Chat(ctx context.Context, req *ai_agent.ChatRequest, callOptions ...callopt.Option) (r *ai_agent.ChatResponse, err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
 	return p.kClient.Chat(ctx, req)
+}
+
+func (p *kAIAgentServiceClient) ChatStream(ctx context.Context, req *ai_agent.ChatRequest, callOptions ...streamcall.Option) (stream AIAgentService_ChatStreamClient, err error) {
+	ctx = client.NewCtxWithCallOptions(ctx, streamcall.GetCallOptions(callOptions))
+	return p.kClient.ChatStream(ctx, req)
 }
 
 func (p *kAIAgentServiceClient) GetPromptSuggestions(ctx context.Context, req *ai_agent.PromptSuggestionsRequest, callOptions ...callopt.Option) (r *ai_agent.PromptSuggestionsResponse, err error) {

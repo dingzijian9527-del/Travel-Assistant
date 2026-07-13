@@ -2,6 +2,7 @@ package rpcaiagent
 
 import (
 	"context"
+	"io"
 	"sync"
 	"time"
 
@@ -110,6 +111,40 @@ func (s *AIAgentServiceImpl) Chat(ctx context.Context, req *aiagent.ChatRequest)
 	}
 	return &aiagent.ChatResponse{BaseResp: successBaseResp(), Reply: toChatMessageDTO(reply), Suggestions: suggestions}, nil
 }
+
+func (s *AIAgentServiceImpl) ChatStream(ctx context.Context, req *aiagent.ChatRequest, stream aiagent.AIAgentService_ChatStreamServer) error {
+	if req == nil {
+		return stream.Send(ctx, &aiagent.ChatStreamChunk{BaseResp: errorBaseResp(errParam("request is required")), Done: true})
+	}
+	service, err := s.getService(ctx)
+	if err != nil {
+		return stream.Send(ctx, &aiagent.ChatStreamChunk{BaseResp: errorBaseResp(errParam("AI 智能体服务初始化失败")), Done: true})
+	}
+	writer := &chatStreamChunkWriter{ctx: ctx, stream: stream}
+	if svcErr := service.ChatStream(ctx, req.UserId, req.Message, writer); svcErr != nil {
+		return stream.Send(ctx, &aiagent.ChatStreamChunk{BaseResp: errorBaseResp(svcErr), Done: true})
+	}
+	return stream.Send(ctx, &aiagent.ChatStreamChunk{BaseResp: successBaseResp(), Done: true})
+}
+
+type chatStreamChunkWriter struct {
+	ctx    context.Context
+	stream aiagent.AIAgentService_ChatStreamServer
+}
+
+func (w *chatStreamChunkWriter) Write(data []byte) (int, error) {
+	if len(data) == 0 {
+		return 0, nil
+	}
+	content := string(data)
+	err := w.stream.Send(w.ctx, &aiagent.ChatStreamChunk{BaseResp: successBaseResp(), Content: &content, Done: false})
+	if err != nil {
+		return 0, err
+	}
+	return len(data), nil
+}
+
+var _ io.Writer = (*chatStreamChunkWriter)(nil)
 
 // GetPromptSuggestions 实现提示词推荐 RPC 接口。
 func (s *AIAgentServiceImpl) GetPromptSuggestions(ctx context.Context, req *aiagent.PromptSuggestionsRequest) (*aiagent.PromptSuggestionsResponse, error) {

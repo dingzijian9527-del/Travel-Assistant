@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"io"
 	"unicode/utf8"
 
@@ -67,12 +68,29 @@ func writeChatStreamReply(ctx context.Context, writer *io.PipeWriter, runtime *b
 		_, _ = writer.Write([]byte(unavailableServiceReply()))
 		return
 	}
-	resp, err := clients.aiAgent.Chat(ctx, &aiagent.ChatRequest{UserId: userID, Message: message})
-	if err != nil || resp == nil || resp.GetBaseResp().GetCode() != 0 || resp.GetReply() == nil {
+	stream, err := clients.aiAgent.ChatStream(ctx, &aiagent.ChatRequest{UserId: userID, Message: message})
+	if err != nil {
 		_, _ = writer.Write([]byte(unavailableServiceReply()))
 		return
 	}
-	_, _ = writer.Write([]byte(resp.GetReply().GetContent()))
+	for {
+		chunk, err := stream.Recv(ctx)
+		if errors.Is(err, io.EOF) {
+			return
+		}
+		if err != nil || chunk == nil || chunk.GetBaseResp().GetCode() != 0 {
+			_, _ = writer.Write([]byte(unavailableServiceReply()))
+			return
+		}
+		if content := chunk.GetContent(); content != "" {
+			if _, err := writer.Write([]byte(content)); err != nil {
+				return
+			}
+		}
+		if chunk.GetDone() {
+			return
+		}
+	}
 }
 
 func unavailableServiceReply() string {

@@ -43,8 +43,15 @@ struct PromptSuggestionsResponse {
     2: optional list<string> suggestions,
 }
 
+struct ChatStreamChunk {
+    1: required base.BaseResp baseResp,
+    2: optional string content,
+    3: required bool done,
+}
+
 // AIAgentService 提供旅行智能体能力。
 service AIAgentService {
     ChatResponse Chat(1: ChatRequest req),
+    ChatStreamChunk ChatStream(1: ChatRequest req) (streaming.mode="server"),
     PromptSuggestionsResponse GetPromptSuggestions(1: PromptSuggestionsRequest req),
 }
