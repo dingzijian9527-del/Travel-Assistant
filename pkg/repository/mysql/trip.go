@@ -165,6 +165,44 @@ WHERE id = ? AND user_id = ? AND deleted_at IS NULL`, now, now, tripID, userID)
 	return err == nil && affected > 0
 }
 
+func (r *TripRepository) Update(ctx context.Context, userID int64, tripID string, apply func(*repository.Trip)) (*repository.Trip, bool, error) {
+	item, found, err := r.FindByIDForUser(ctx, userID, tripID)
+	if err != nil {
+		return nil, false, err
+	}
+	if !found {
+		return nil, false, nil
+	}
+	apply(item)
+	now := time.Now()
+	item.UpdatedAt = now
+	planJSON, err := marshalTripPlan(item)
+	if err != nil {
+		return nil, false, err
+	}
+	_, err = r.db.ExecContext(ctx, `
+UPDATE trips
+SET title = ?, subtitle = ?, destination = ?, date_range = ?, day_count = ?,
+    people = ?, budget_level = ?, plan_json = ?, updated_at = ?
+WHERE id = ? AND user_id = ? AND deleted_at IS NULL`,
+		item.Title,
+		item.Subtitle,
+		item.Destination,
+		item.DateRange,
+		item.DayCount,
+		item.People,
+		item.BudgetLevel,
+		planJSON,
+		item.UpdatedAt,
+		tripID,
+		userID,
+	)
+	if err != nil {
+		return nil, false, err
+	}
+	return item, true, nil
+}
+
 type tripScanner interface {
 	Scan(dest ...any) error
 }

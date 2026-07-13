@@ -35,6 +35,10 @@ func deleteTripErrorResponse(err *serviceError) *trip.DeleteTripResponse {
 	return &trip.DeleteTripResponse{BaseResp: errorBaseResp(err)}
 }
 
+func updateTripErrorResponse(err *serviceError) *trip.UpdateTripResponse {
+	return &trip.UpdateTripResponse{BaseResp: errorBaseResp(err)}
+}
+
 func toTripDTO(input *tripModel) *trip.TripInfo {
 	if input == nil {
 		return nil

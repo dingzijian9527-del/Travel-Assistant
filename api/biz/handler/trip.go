@@ -1,12 +1,12 @@
-﻿package handler
+package handler
 
 import (
 	"context"
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
-	trip "github.com/dingzijian9527-del/Travel-Assistant/kitex_gen/trip"
 	"github.com/dingzijian9527-del/Travel-Assistant/api/biz/middleware"
+	trip "github.com/dingzijian9527-del/Travel-Assistant/kitex_gen/trip"
 	"github.com/dingzijian9527-del/Travel-Assistant/pkg/bootstrap"
 	"github.com/dingzijian9527-del/Travel-Assistant/pkg/jwtx"
 )
@@ -157,6 +157,54 @@ func DeleteTrip(runtime *bootstrap.Runtime) app.HandlerFunc {
 			return
 		}
 		writeRPCResponse(c, resp.GetBaseResp().GetCode(), resp.GetBaseResp().GetMsg(), nil)
+	}
+}
+
+type updateTripRequest struct {
+	Title       *string          `json:"title,omitempty"`
+	Subtitle    *string          `json:"subtitle,omitempty"`
+	Destination *string          `json:"destination,omitempty"`
+	DateRange   *string          `json:"date_range,omitempty"`
+	DayCount    *int32           `json:"day_count,omitempty"`
+	People      *string          `json:"people,omitempty"`
+	BudgetLevel *string          `json:"budget_level,omitempty"`
+	Days        []tripDayPayload `json:"days,omitempty"`
+}
+
+func UpdateTrip(runtime *bootstrap.Runtime) app.HandlerFunc {
+	return func(ctx context.Context, c *app.RequestContext) {
+		userID, ok := tripUserIDFromRequest(runtime, c)
+		if !ok {
+			return
+		}
+		var req updateTripRequest
+		if err := c.BindAndValidate(&req); err != nil {
+			writeJSON(c, consts.StatusBadRequest, 400, "请求参数错误", nil)
+			return
+		}
+		clients, err := clientsFor(runtime)
+		if err != nil {
+			writeJSON(c, consts.StatusInternalServerError, 500, "行程服务暂不可用", nil)
+			return
+		}
+		rpcReq := &trip.UpdateTripRequest{
+			UserId:      userID,
+			TripId:      c.Param("tripID"),
+			Title:       req.Title,
+			Subtitle:    req.Subtitle,
+			Destination: req.Destination,
+			DateRange:   req.DateRange,
+			DayCount:    req.DayCount,
+			People:      req.People,
+			BudgetLevel: req.BudgetLevel,
+			Days:        toTripDaysRPC(req.Days),
+		}
+		resp, err := clients.trip.UpdateTrip(ctx, rpcReq)
+		if err != nil || resp == nil {
+			writeJSON(c, consts.StatusInternalServerError, 500, "行程服务调用失败", nil)
+			return
+		}
+		writeRPCResponse(c, resp.GetBaseResp().GetCode(), resp.GetBaseResp().GetMsg(), resp.GetTrip())
 	}
 }
 
