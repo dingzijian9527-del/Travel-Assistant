@@ -67,8 +67,9 @@ type SMSConfig struct {
 }
 
 type AuthConfig struct {
-	JWTSecret string        `mapstructure:"jwt_secret"`
-	JWTExpire time.Duration `mapstructure:"jwt_expire"`
+	JWTSecret        string        `mapstructure:"jwt_secret"`
+	JWTExpire        time.Duration `mapstructure:"jwt_expire"`
+	JWTRefreshExpire time.Duration `mapstructure:"jwt_refresh_expire"`
 }
 
 type UploadQiniuConfig struct {
@@ -366,6 +367,7 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("sms.dev_return_code", false)
 	v.SetDefault("auth.jwt_secret", "")
 	v.SetDefault("auth.jwt_expire", "24h")
+	v.SetDefault("auth.jwt_refresh_expire", "168h")
 	v.SetDefault("upload.local_dir", "uploads")
 	v.SetDefault("upload.max_size_mb", 20)
 	v.SetDefault("upload.allowed_extensions", []string{".jpg", ".jpeg", ".png", ".webp", ".pdf"})

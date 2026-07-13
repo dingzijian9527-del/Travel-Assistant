@@ -5,12 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
 	"github.com/dingzijian9527-del/Travel-Assistant/api/biz/middleware"
 	user "github.com/dingzijian9527-del/Travel-Assistant/kitex_gen/user"
 	"github.com/dingzijian9527-del/Travel-Assistant/pkg/bootstrap"
+	"github.com/dingzijian9527-del/Travel-Assistant/pkg/jwtx"
 	"github.com/dingzijian9527-del/Travel-Assistant/pkg/verifycodex"
 	"go.uber.org/zap"
 )
@@ -328,6 +330,115 @@ func UpdateUserSettings(runtime *bootstrap.Runtime) app.HandlerFunc {
 			return
 		}
 		writeRPCResponse(c, resp.GetBaseResp().GetCode(), resp.GetBaseResp().GetMsg(), resp.GetSettings())
+	}
+}
+
+// ---------- token refresh ----------
+
+type refreshRequest struct {
+	RefreshToken string `json:"refresh_token"`
+}
+
+// TokenRefresh 使用刷新令牌换取新的访问令牌和刷新令牌。
+func TokenRefresh(runtime *bootstrap.Runtime) app.HandlerFunc {
+	return func(ctx context.Context, c *app.RequestContext) {
+		var req refreshRequest
+		if err := c.BindAndValidate(&req); err != nil {
+			writeJSON(c, consts.StatusBadRequest, 400, "请求参数错误", nil)
+			return
+		}
+		if strings.TrimSpace(req.RefreshToken) == "" {
+			writeJSON(c, consts.StatusBadRequest, 400, "refresh_token不能为空", nil)
+			return
+		}
+
+		auth := runtime.Config.Auth
+		refreshCfg := jwtx.Config{Secret: auth.JWTSecret, Expire: auth.JWTExpire}
+		claims, err := jwtx.ParseRefresh(refreshCfg, req.RefreshToken)
+		if err != nil {
+			writeJSON(c, consts.StatusUnauthorized, 401, "刷新令牌无效或已过期", nil)
+			return
+		}
+
+		refreshExpire := auth.JWTRefreshExpire
+		if refreshExpire <= 0 {
+			refreshExpire = 7 * 24 * time.Hour
+		}
+		accessToken, refreshToken, err := jwtx.GeneratePair(
+			jwtx.Config{Secret: auth.JWTSecret, Expire: auth.JWTExpire},
+			jwtx.Claims{UserID: claims.UserID, Phone: claims.Phone, Role: claims.Role},
+			refreshExpire,
+		)
+		if err != nil {
+			writeJSON(c, consts.StatusInternalServerError, 500, "令牌生成失败", nil)
+			return
+		}
+
+		writeJSON(c, consts.StatusOK, 0, "success", map[string]any{
+			"access_token":  accessToken,
+			"refresh_token": refreshToken,
+		})
+	}
+}
+
+// ---------- password confirm ----------
+
+type confirmRequest struct {
+	Password string `json:"password"`
+}
+
+// PasswordConfirm 敏感操作二次校验：用户输入密码后签发一次性确认令牌（有效5分钟）。
+func PasswordConfirm(runtime *bootstrap.Runtime) app.HandlerFunc {
+	return func(ctx context.Context, c *app.RequestContext) {
+		claims, ok := middleware.AuthClaims(c)
+		if !ok {
+			writeJSON(c, consts.StatusUnauthorized, 401, "登录状态无效，请重新登录", nil)
+			return
+		}
+
+		var req confirmRequest
+		if err := c.BindAndValidate(&req); err != nil {
+			writeJSON(c, consts.StatusBadRequest, 400, "请求参数错误", nil)
+			return
+		}
+		if strings.TrimSpace(req.Password) == "" {
+			writeJSON(c, consts.StatusBadRequest, 400, "密码不能为空", nil)
+			return
+		}
+
+		// 通过登录接口验证密码
+		clients, err := clientsFor(runtime)
+		if err != nil {
+			writeJSON(c, consts.StatusInternalServerError, 500, "用户服务暂不可用", nil)
+			return
+		}
+		resp, err := clients.user.Login(ctx, &user.LoginRequest{Phone: claims.Phone, Password: req.Password})
+		if err != nil {
+			writeJSON(c, consts.StatusInternalServerError, 500, "用户服务调用失败", nil)
+			return
+		}
+		if resp.GetBaseResp().GetCode() != 0 {
+			writeJSON(c, consts.StatusOK, resp.GetBaseResp().GetCode(), "密码验证失败", nil)
+			return
+		}
+
+		// 密码验证成功，签发一次性确认令牌
+		confirmToken, err := middleware.GenerateConfirmToken()
+		if err != nil {
+			writeJSON(c, consts.StatusInternalServerError, 500, "令牌生成失败", nil)
+			return
+		}
+
+		store := middleware.DefaultConfirmTokenStore()
+		if err := store.Save(ctx, confirmToken, 5*time.Minute); err != nil {
+			writeJSON(c, consts.StatusInternalServerError, 500, "令牌存储失败", nil)
+			return
+		}
+
+		writeJSON(c, consts.StatusOK, 0, "success", map[string]any{
+			"confirm_token":  confirmToken,
+			"expire_seconds": 300,
+		})
 	}
 }
 

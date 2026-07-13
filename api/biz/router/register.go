@@ -21,6 +21,7 @@ func Register(h *server.Hertz, runtime *bootstrap.Runtime) {
 	v1.POST("/sms/register-code", gatewaymw.RegisterCodeRateLimit(), handler.SendRegisterCode(runtime))
 	v1.POST("/user/register", gatewaymw.RateLimitByIP("user-register", 5, time.Minute), handler.RegisterUser(runtime))
 	v1.POST("/user/login", gatewaymw.RateLimitByIP("user-login", 5, time.Minute), gatewaymw.LoginRateLimit(), handler.LoginUser(runtime))
+	v1.POST("/user/refresh", handler.TokenRefresh(runtime))
 
 	// 受保护接口（需要有效令牌）
 	auth := v1.Group("", gatewaymw.RequireAuth(runtime))
@@ -32,6 +33,7 @@ func Register(h *server.Hertz, runtime *bootstrap.Runtime) {
 		auth.POST("/user/preferences", handler.UpdateUserPreferences(runtime))
 		auth.GET("/user/settings", handler.GetUserSettings(runtime))
 		auth.POST("/user/settings", handler.UpdateUserSettings(runtime))
+		auth.POST("/user/confirm", handler.PasswordConfirm(runtime))
 		auth.POST("/upload/check", gatewaymw.RateLimitByIP("upload-check", 20, time.Minute), handler.CheckUpload(runtime))
 		auth.POST("/upload/avatar", gatewaymw.RateLimitByIP("upload-avatar", 20, time.Minute), handler.UploadAvatar(runtime))
 		auth.POST("/ai-stream", gatewaymw.RateLimitByIP("ai-stream", 20, time.Minute), handler.ChatStream(runtime))
@@ -41,5 +43,6 @@ func Register(h *server.Hertz, runtime *bootstrap.Runtime) {
 		auth.GET("/trips/latest", handler.GetLatestTrip(runtime))
 		auth.GET("/trips/:tripID", handler.GetTripDetail(runtime))
 		auth.DELETE("/trips/:tripID", handler.DeleteTrip(runtime))
+		auth.PUT("/trips/:tripID", handler.UpdateTrip(runtime))
 	}
 }
