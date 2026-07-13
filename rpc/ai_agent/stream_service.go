@@ -64,7 +64,13 @@ func buildRetriever(ragCfg config.RAGConfig, logger *zap.Logger) rag.Retriever {
 		defer cancel()
 		milvusClient, err := client.NewClient(connectCtx, client.Config{Address: ragCfg.Address})
 		if err == nil {
-			embedder := rag.NewHashEmbedder(ragCfg.EmbeddingDim)
+			embedder, embedderErr := rag.NewConfiguredEmbedder(ragCfg)
+			if embedderErr != nil {
+				if logger != nil {
+					logger.Warn("语义嵌入器初始化失败，流式服务降级为本地关键词检索", zap.Error(embedderErr))
+				}
+				return rag.NewLocalRetriever(rag.DefaultDocuments())
+			}
 			if logger != nil {
 				logger.Info("AI 智能体流式服务已连接 Milvus", zap.String("address", ragCfg.Address))
 			}

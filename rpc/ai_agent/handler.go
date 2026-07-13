@@ -74,7 +74,10 @@ func (s *AIAgentServiceImpl) buildRetriever(ctx context.Context, cfg *config.Con
 		defer cancel()
 		milvusClient, err := client.NewClient(connectCtx, client.Config{Address: cfg.RAG.Address})
 		if err == nil {
-			embedder := rag.NewHashEmbedder(cfg.RAG.EmbeddingDim)
+			embedder, embedderErr := rag.NewConfiguredEmbedder(cfg.RAG)
+			if embedderErr != nil {
+				return nil, embedderErr
+			}
 			if s.logger != nil {
 				s.logger.Info("AI 智能体已连接 Milvus 向量数据库", zap.String("address", cfg.RAG.Address))
 			}

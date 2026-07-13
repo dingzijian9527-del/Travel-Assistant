@@ -1,7 +1,8 @@
-﻿package rag
+package rag
 
 import (
 	"context"
+	"errors"
 	"sort"
 	"strings"
 	"unicode"
@@ -39,7 +40,11 @@ func (r *MilvusRetriever) Search(ctx context.Context, query string, cfg config.R
 	default:
 	}
 
-	queryVector := entity.FloatVector(r.embedder.Embed(query))
+	queryEmbedding, err := embedQuery(ctx, r.embedder, query)
+	if err != nil {
+		return nil, err
+	}
+	queryVector := entity.FloatVector(queryEmbedding)
 	searchParams, _ := entity.NewIndexFlatSearchParam()
 
 	searchResult, err := r.milvusClient.Search(
@@ -81,6 +86,17 @@ func (r *MilvusRetriever) Search(ctx context.Context, query string, cfg config.R
 		results = results[:cfg.TopK]
 	}
 	return results, nil
+}
+
+func embedQuery(ctx context.Context, embedder Embedder, query string) ([]float32, error) {
+	if contextual, ok := embedder.(ContextEmbedder); ok {
+		return contextual.EmbedContext(ctx, query)
+	}
+	vector := embedder.Embed(query)
+	if len(vector) == 0 {
+		return nil, errors.New("嵌入器没有返回向量")
+	}
+	return vector, nil
 }
 
 func extractResults(fields client.ResultSet, scores []float32, minScore float64) []Result {

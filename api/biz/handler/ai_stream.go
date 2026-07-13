@@ -7,24 +7,20 @@ import (
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
-	"go.uber.org/zap"
 
 	"github.com/dingzijian9527-del/Travel-Assistant/api/biz/middleware"
 	"github.com/dingzijian9527-del/Travel-Assistant/api/biz/validator"
+	aiagent "github.com/dingzijian9527-del/Travel-Assistant/kitex_gen/ai_agent"
 	"github.com/dingzijian9527-del/Travel-Assistant/pkg/bootstrap"
 	"github.com/dingzijian9527-del/Travel-Assistant/pkg/jwtx"
-	rpcaiagent "github.com/dingzijian9527-del/Travel-Assistant/rpc/ai_agent"
 )
 
 const modelUnavailableReply = "智能体模型暂不可用，请稍后重试或检查火山方舟接入点配置。"
 
-// ChatStreamRequest 描述旅行智能体流式对话请求。
 type ChatStreamRequest struct {
 	Message string `json:"message"`
 }
 
-// ChatStream 处理旅行智能体流式对话。
-// 通过 HTTP 流式输出智能体回复，内部调用 rpc/ai_agent 包的 ChatStream 方法。
 func ChatStream(runtime *bootstrap.Runtime) app.HandlerFunc {
 	return func(ctx context.Context, c *app.RequestContext) {
 		var req ChatStreamRequest
@@ -66,32 +62,19 @@ func ChatStream(runtime *bootstrap.Runtime) app.HandlerFunc {
 func writeChatStreamReply(ctx context.Context, writer *io.PipeWriter, runtime *bootstrap.Runtime, userID int64, message string) {
 	defer writer.Close()
 
-	aiAgent := newAIAgentStreamService(runtime)
-	if aiAgent == nil {
+	clients, err := clientsFor(runtime)
+	if err != nil {
 		_, _ = writer.Write([]byte(unavailableServiceReply()))
 		return
 	}
-	svcErr := aiAgent.ChatStream(ctx, userID, message, writer)
-	if svcErr != nil {
-		runtime.Logger.Warn("旅行智能体流式对话失败", zap.Error(svcErr))
+	resp, err := clients.aiAgent.Chat(ctx, &aiagent.ChatRequest{UserId: userID, Message: message})
+	if err != nil || resp == nil || resp.GetBaseResp().GetCode() != 0 || resp.GetReply() == nil {
+		_, _ = writer.Write([]byte(unavailableServiceReply()))
+		return
 	}
-}
-
-func newAIAgentStreamService(runtime *bootstrap.Runtime) *rpcaiagent.AIAgentStreamService {
-	service, err := rpcaiagent.NewAIAgentStreamService(
-		runtime.Config.RAG,
-		runtime.Config.AI,
-		runtime.Config.MySQL,
-		runtime.Config.TravelData,
-		runtime.Logger,
-	)
-	if err != nil {
-		runtime.Logger.Warn("旅行智能体流式服务初始化失败", zap.Error(err))
-		return nil
-	}
-	return service
+	_, _ = writer.Write([]byte(resp.GetReply().GetContent()))
 }
 
 func unavailableServiceReply() string {
-	return "智能体服务初始化失败，请稍后重试。"
+	return "智能体服务暂不可用，请稍后重试。"
 }

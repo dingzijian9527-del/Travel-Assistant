@@ -42,7 +42,11 @@ func main() {
 	defer milvusClient.Close()
 
 	documents := rag.DefaultDocuments()
-	records := rag.BuildSeedRecords(documents, rag.NewHashEmbedder(cfg.RAG.EmbeddingDim))
+	embedder, err := rag.NewConfiguredEmbedder(cfg.RAG)
+	if err != nil {
+		log.Fatalf("创建嵌入器失败：%v", err)
+	}
+	records := rag.BuildSeedRecords(documents, embedder)
 	writer := rag.NewMilvusWriter(milvusClient)
 
 	if err := writer.EnsureCollection(ctx, cfg.RAG.CollectionName, cfg.RAG.EmbeddingDim, *reset); err != nil {

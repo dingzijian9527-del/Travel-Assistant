@@ -100,13 +100,16 @@ type AIConfig struct {
 }
 
 type RAGConfig struct {
-	Enabled        bool    `mapstructure:"enabled"`
-	Provider       string  `mapstructure:"provider"`
-	Address        string  `mapstructure:"address"`
-	CollectionName string  `mapstructure:"collection_name"`
-	EmbeddingDim   int     `mapstructure:"embedding_dim"`
-	TopK           int     `mapstructure:"top_k"`
-	MinScore       float64 `mapstructure:"min_score"`
+	Enabled          bool    `mapstructure:"enabled"`
+	Provider         string  `mapstructure:"provider"`
+	Address          string  `mapstructure:"address"`
+	CollectionName   string  `mapstructure:"collection_name"`
+	EmbeddingDim     int     `mapstructure:"embedding_dim"`
+	EmbeddingBaseURL string  `mapstructure:"embedding_base_url"`
+	EmbeddingAPIKey  string  `mapstructure:"embedding_api_key"`
+	EmbeddingModel   string  `mapstructure:"embedding_model"`
+	TopK             int     `mapstructure:"top_k"`
+	MinScore         float64 `mapstructure:"min_score"`
 }
 
 type TravelDataConfig struct {
@@ -244,6 +247,15 @@ func (c *Config) ValidateForService(service string) error {
 			return fmt.Errorf("travel_data keys are required in production")
 		}
 	}
+	if c.RAG.Enabled {
+		provider := strings.ToLower(strings.TrimSpace(c.RAG.Provider))
+		if provider == "" || provider == "local" {
+			return fmt.Errorf("rag.provider must use a semantic embedder in production")
+		}
+		if strings.TrimSpace(c.RAG.EmbeddingBaseURL) == "" || strings.TrimSpace(c.RAG.EmbeddingAPIKey) == "" || strings.TrimSpace(c.RAG.EmbeddingModel) == "" {
+			return fmt.Errorf("semantic embedding config is required in production")
+		}
+	}
 	return nil
 }
 
@@ -377,6 +389,9 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("rag.address", "127.0.0.1:19530")
 	v.SetDefault("rag.collection_name", "travel_knowledge")
 	v.SetDefault("rag.embedding_dim", 768)
+	v.SetDefault("rag.embedding_base_url", "")
+	v.SetDefault("rag.embedding_api_key", "")
+	v.SetDefault("rag.embedding_model", "")
 	v.SetDefault("rag.top_k", 3)
 	v.SetDefault("rag.min_score", 0.15)
 	v.SetDefault("travel_data.enabled", true)

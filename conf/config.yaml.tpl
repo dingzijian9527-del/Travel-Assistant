@@ -78,6 +78,9 @@ rag:
   address: "${TRAVEL_ASSISTANT_RAG_ADDRESS}"
   collection_name: travel_knowledge
   embedding_dim: 768
+  embedding_base_url: "${TRAVEL_ASSISTANT_RAG_EMBEDDING_BASE_URL}"
+  embedding_api_key: "${TRAVEL_ASSISTANT_RAG_EMBEDDING_API_KEY}"
+  embedding_model: "${TRAVEL_ASSISTANT_RAG_EMBEDDING_MODEL}"
   top_k: 3
   min_score: 0.15
 
