@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <view class="login-page">
     <view class="phone-shell">
       <view class="login-header">
@@ -26,7 +26,7 @@
 
 <script setup>
 import { ref } from "vue";
-import { apiBase } from "../../utils/runtime.js";
+import { apiBase, parseAPIResponse } from "../../utils/runtime.js";
 const phone = ref("");
 const password = ref("");
 async function login() {
@@ -37,12 +37,12 @@ async function login() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ phone: phone.value.trim(), password: password.value })
     });
-    const result = await response.json();
+    const result = await parseAPIResponse(response);
     if (!response.ok || result.code !== 0) { toast(result.msg || "登录失败"); return; }
     uni.setStorageSync("travel_token", result.data.token);
     uni.setStorageSync("travel_user", result.data.user);
     uni.switchTab({ url: "/pages/index/index" });
-  } catch (error) { toast("网关服务暂不可用"); }
+  } catch (error) { toast(error?.message || "网关服务暂不可用"); }
 }
 function goRegister() { uni.navigateTo({ url: "/pages/register/index" }); }
 function toast(title) { uni.showToast({ title, icon: "none" }); }

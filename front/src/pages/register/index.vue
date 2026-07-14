@@ -31,7 +31,7 @@
 
 <script setup>
 import { ref } from "vue";
-import { apiBase } from "../../utils/runtime.js";
+import { apiBase, parseAPIResponse } from "../../utils/runtime.js";
 const phone = ref("");
 const code = ref("");
 const password = ref("");
@@ -48,11 +48,11 @@ async function sendCode() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ phone: mobile })
     });
-    const result = await response.json();
+    const result = await parseAPIResponse(response);
     if (!response.ok || result.code !== 0) { toast(result.msg || "验证码发送失败"); return; }
     if (result.data && result.data.code) { code.value = String(result.data.code); toast("开发环境验证码已填入"); return; }
     toast("验证码已发送");
-  } catch (error) { toast("网关服务暂不可用"); }
+  } catch (error) { toast(error?.message || "网关服务暂不可用"); }
   finally { sendingCode.value = false; }
 }
 async function register() {
@@ -64,19 +64,19 @@ async function register() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ phone: phone.value.trim(), code: code.value.trim(), password: password.value, nickname: "", home_city: "", current_city: "" })
     });
-    const registerResult = await registerResponse.json();
+    const registerResult = await parseAPIResponse(registerResponse);
     if (!registerResponse.ok || registerResult.code !== 0) { toast(registerResult.msg || "注册失败"); return; }
     const loginResponse = await fetch(`${apiBase}/api/v1/user/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ phone: phone.value.trim(), password: password.value })
     });
-    const loginResult = await loginResponse.json();
+    const loginResult = await parseAPIResponse(loginResponse);
     if (!loginResponse.ok || loginResult.code !== 0) { toast(loginResult.msg || "注册成功，请返回登录"); return; }
     uni.setStorageSync("travel_token", loginResult.data.token);
     uni.setStorageSync("travel_user", loginResult.data.user);
     uni.switchTab({ url: "/pages/index/index" });
-  } catch (error) { toast("网关服务暂不可用"); }
+  } catch (error) { toast(error?.message || "网关服务暂不可用"); }
 }
 function toast(title) { uni.showToast({ title, icon: "none" }); }
 </script>

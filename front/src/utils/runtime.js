@@ -5,5 +5,16 @@ export function normalizeApiBase(value) {
   return value.trim().replace(/\/+$/, "");
 }
 
-const buildEnv = typeof import.meta.env === "object" && import.meta.env ? import.meta.env : {};
-export const apiBase = normalizeApiBase(buildEnv.VITE_API_BASE_URL);
+export const apiBase = normalizeApiBase("http://127.0.0.1:8080");
+
+export async function parseAPIResponse(response) {
+  const contentType = String(response?.headers?.get?.("content-type") || "").toLowerCase();
+  if (!contentType.includes("application/json")) {
+    throw new Error("网关返回了非接口数据，请检查网关地址");
+  }
+  try {
+    return await response.json();
+  } catch {
+    throw new Error("网关返回了无效接口数据，请稍后重试");
+  }
+}
