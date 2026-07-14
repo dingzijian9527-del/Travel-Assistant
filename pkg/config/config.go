@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -66,8 +67,9 @@ type SMSConfig struct {
 }
 
 type AuthConfig struct {
-	JWTSecret string        `mapstructure:"jwt_secret"`
-	JWTExpire time.Duration `mapstructure:"jwt_expire"`
+	JWTSecret        string        `mapstructure:"jwt_secret"`
+	JWTExpire        time.Duration `mapstructure:"jwt_expire"`
+	JWTRefreshExpire time.Duration `mapstructure:"jwt_refresh_expire"`
 }
 
 type UploadQiniuConfig struct {
@@ -99,13 +101,16 @@ type AIConfig struct {
 }
 
 type RAGConfig struct {
-	Enabled        bool    `mapstructure:"enabled"`
-	Provider       string  `mapstructure:"provider"`
-	Address        string  `mapstructure:"address"`
-	CollectionName string  `mapstructure:"collection_name"`
-	EmbeddingDim   int     `mapstructure:"embedding_dim"`
-	TopK           int     `mapstructure:"top_k"`
-	MinScore       float64 `mapstructure:"min_score"`
+	Enabled          bool    `mapstructure:"enabled"`
+	Provider         string  `mapstructure:"provider"`
+	Address          string  `mapstructure:"address"`
+	CollectionName   string  `mapstructure:"collection_name"`
+	EmbeddingDim     int     `mapstructure:"embedding_dim"`
+	EmbeddingBaseURL string  `mapstructure:"embedding_base_url"`
+	EmbeddingAPIKey  string  `mapstructure:"embedding_api_key"`
+	EmbeddingModel   string  `mapstructure:"embedding_model"`
+	TopK             int     `mapstructure:"top_k"`
+	MinScore         float64 `mapstructure:"min_score"`
 }
 
 type TravelDataConfig struct {
@@ -129,6 +134,8 @@ type Config struct {
 	RAG        RAGConfig        `mapstructure:"rag"`
 	TravelData TravelDataConfig `mapstructure:"travel_data"`
 }
+
+const placeholderJWTSecret = "change-me-in-local-config"
 
 var global *Config
 
@@ -169,9 +176,155 @@ func InitGlobal(path string) (*Config, error) {
 
 func MustGlobal() *Config {
 	if global == nil {
-		panic("閰嶇疆鏈垵濮嬪寲")
+		panic("全局配置尚未初始化")
 	}
 	return global
+}
+
+func (c *Config) ValidateForService(service string) error {
+	if c == nil {
+		return fmt.Errorf("config is required")
+	}
+	service = strings.TrimSpace(service)
+	if strings.TrimSpace(c.App.Name) == "" {
+		return fmt.Errorf("app.name is required")
+	}
+	if service == "api-gateway" {
+		if strings.TrimSpace(c.HTTP.Host) == "" || c.HTTP.Port <= 0 {
+			return fmt.Errorf("http.host and http.port are required for %s", service)
+		}
+	}
+	if err := validateJWTSecret(c.Auth.JWTSecret); err != nil {
+		return err
+	}
+	if requiresMySQL(service) && strings.TrimSpace(c.MySQL.DSN) == "" {
+		return fmt.Errorf("mysql.dsn is required for %s", service)
+	}
+	if requiresRPCHost(service) && strings.TrimSpace(c.RPC.Host) == "" {
+		return fmt.Errorf("rpc.host is required for %s", service)
+	}
+
+	switch service {
+	case "user-service":
+		if err := validateRPCServiceConfig("rpc.user", c.RPC.User); err != nil {
+			return err
+		}
+	case "ai-agent-service":
+		if err := validateRPCServiceConfig("rpc.ai_agent", c.RPC.AIAgent); err != nil {
+			return err
+		}
+	case "trip-service":
+		if err := validateRPCServiceConfig("rpc.trip", c.RPC.Trip); err != nil {
+			return err
+		}
+	case "api-gateway", "":
+		if strings.TrimSpace(c.Redis.Addr) == "" {
+			return fmt.Errorf("redis.addr is required for api-gateway")
+		}
+	}
+
+	if !isProductionEnv(c.App.Env) {
+		return nil
+	}
+	if c.SMS.DevReturnCode {
+		return fmt.Errorf("sms.dev_return_code must be false in production")
+	}
+	if service == "api-gateway" || service == "ai-agent-service" {
+		if strings.TrimSpace(c.AI.APIKey) == "" {
+			return fmt.Errorf("ai.api_key is required in production")
+		}
+		if strings.TrimSpace(c.AI.EndpointID) == "" && strings.TrimSpace(c.AI.ModelName) == "" && strings.TrimSpace(c.AI.Model) == "" {
+			return fmt.Errorf("ai endpoint or model is required in production")
+		}
+	}
+	if service == "api-gateway" {
+		if !tencentSMSConfigComplete(c.SMS) {
+			return fmt.Errorf("sms config is required in production")
+		}
+		if !qiniuConfigComplete(c.Upload.Qiniu) {
+			return fmt.Errorf("upload.qiniu config is required in production")
+		}
+		if c.TravelData.Enabled && (strings.TrimSpace(c.TravelData.AmapKey) == "" || strings.TrimSpace(c.TravelData.QWeatherKey) == "") {
+			return fmt.Errorf("travel_data keys are required in production")
+		}
+	}
+	if c.RAG.Enabled {
+		provider := strings.ToLower(strings.TrimSpace(c.RAG.Provider))
+		if provider == "" || provider == "local" {
+			return fmt.Errorf("rag.provider must use a semantic embedder in production")
+		}
+		if strings.TrimSpace(c.RAG.EmbeddingBaseURL) == "" || strings.TrimSpace(c.RAG.EmbeddingAPIKey) == "" || strings.TrimSpace(c.RAG.EmbeddingModel) == "" {
+			return fmt.Errorf("semantic embedding config is required in production")
+		}
+	}
+	return nil
+}
+
+func normalizeEnv(env string) string {
+	env = strings.ToLower(strings.TrimSpace(env))
+	if env == "" {
+		return "dev"
+	}
+	return env
+}
+
+func isProductionEnv(env string) bool {
+	env = normalizeEnv(env)
+	return env == "prod" || env == "production"
+}
+
+func requiresMySQL(service string) bool {
+	switch service {
+	case "api-gateway", "user-service", "ai-agent-service", "trip-service", "":
+		return true
+	default:
+		return false
+	}
+}
+
+func requiresRPCHost(service string) bool {
+	switch service {
+	case "user-service", "ai-agent-service", "trip-service":
+		return true
+	default:
+		return false
+	}
+}
+
+func validateJWTSecret(secret string) error {
+	secret = strings.TrimSpace(secret)
+	if secret == "" {
+		return fmt.Errorf("auth.jwt_secret is required")
+	}
+	if secret == placeholderJWTSecret {
+		return fmt.Errorf("auth.jwt_secret must not use placeholder value")
+	}
+	return nil
+}
+
+func validateRPCServiceConfig(field string, cfg RPCServiceConfig) error {
+	if strings.TrimSpace(cfg.ServiceName) == "" {
+		return fmt.Errorf("%s.service_name is required", field)
+	}
+	if cfg.Port <= 0 {
+		return fmt.Errorf("%s.port must be positive", field)
+	}
+	return nil
+}
+
+func tencentSMSConfigComplete(cfg SMSConfig) bool {
+	return strings.TrimSpace(cfg.SecretID) != "" &&
+		strings.TrimSpace(cfg.SecretKey) != "" &&
+		strings.TrimSpace(cfg.SDKAppID) != "" &&
+		strings.TrimSpace(cfg.SignName) != "" &&
+		strings.TrimSpace(cfg.TemplateID) != ""
+}
+
+func qiniuConfigComplete(cfg UploadQiniuConfig) bool {
+	return strings.TrimSpace(cfg.AccessKey) != "" &&
+		strings.TrimSpace(cfg.SecretKey) != "" &&
+		strings.TrimSpace(cfg.Bucket) != "" &&
+		strings.TrimSpace(cfg.URL) != ""
 }
 
 func setDefaults(v *viper.Viper) {
@@ -195,7 +348,7 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("log.dir", "logs")
 	v.SetDefault("log.max_age_days", 7)
 	v.SetDefault("log.console", true)
-	v.SetDefault("mysql.dsn", "root:password@tcp(127.0.0.1:3306)/travel-assistant?charset=utf8mb4&parseTime=True&loc=Local")
+	v.SetDefault("mysql.dsn", "")
 	v.SetDefault("mysql.max_idle_conns", 10)
 	v.SetDefault("mysql.max_open_conns", 50)
 	v.SetDefault("mysql.conn_max_lifetime_seconds", 3600)
@@ -212,8 +365,9 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("sms.endpoint", "https://sms.tencentcloudapi.com")
 	v.SetDefault("sms.register_code_expire", "5m")
 	v.SetDefault("sms.dev_return_code", false)
-	v.SetDefault("auth.jwt_secret", "change-me-in-local-config")
+	v.SetDefault("auth.jwt_secret", "")
 	v.SetDefault("auth.jwt_expire", "24h")
+	v.SetDefault("auth.jwt_refresh_expire", "168h")
 	v.SetDefault("upload.local_dir", "uploads")
 	v.SetDefault("upload.max_size_mb", 20)
 	v.SetDefault("upload.allowed_extensions", []string{".jpg", ".jpeg", ".png", ".webp", ".pdf"})
@@ -230,13 +384,16 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("ai.model", "")
 	v.SetDefault("ai.timeout", "60s")
 	v.SetDefault("ai.stream", true)
-	v.SetDefault("ai.system_prompt", "你是旅行助手项目中的旅行智能体，只回答出行计划、旅游攻略、目的地、交通、酒店、天气和美食相关问题。")
+	v.SetDefault("ai.system_prompt", "你是旅行助手项目中的专属旅行规划智能体，只服务旅游出行场景。")
 	v.SetDefault("ai.max_prompt_chars", 2000)
 	v.SetDefault("rag.enabled", true)
 	v.SetDefault("rag.provider", "local")
 	v.SetDefault("rag.address", "127.0.0.1:19530")
 	v.SetDefault("rag.collection_name", "travel_knowledge")
 	v.SetDefault("rag.embedding_dim", 768)
+	v.SetDefault("rag.embedding_base_url", "")
+	v.SetDefault("rag.embedding_api_key", "")
+	v.SetDefault("rag.embedding_model", "")
 	v.SetDefault("rag.top_k", 3)
 	v.SetDefault("rag.min_score", 0.15)
 	v.SetDefault("travel_data.enabled", true)

@@ -1352,6 +1352,244 @@ var fieldIDToName_DeleteTripResponse = map[int16]string{
 	1: "baseResp",
 }
 
+type UpdateTripRequest struct {
+	UserId      int64      `thrift:"userId,1,required" frugal:"1,required,i64" json:"userId"`
+	TripId      string     `thrift:"tripId,2,required" frugal:"2,required,string" json:"tripId"`
+	Title       *string    `thrift:"title,3,optional" frugal:"3,optional,string" json:"title,omitempty"`
+	Subtitle    *string    `thrift:"subtitle,4,optional" frugal:"4,optional,string" json:"subtitle,omitempty"`
+	Destination *string    `thrift:"destination,5,optional" frugal:"5,optional,string" json:"destination,omitempty"`
+	DateRange   *string    `thrift:"dateRange,6,optional" frugal:"6,optional,string" json:"dateRange,omitempty"`
+	DayCount    *int32     `thrift:"dayCount,7,optional" frugal:"7,optional,i32" json:"dayCount,omitempty"`
+	People      *string    `thrift:"people,8,optional" frugal:"8,optional,string" json:"people,omitempty"`
+	BudgetLevel *string    `thrift:"budgetLevel,9,optional" frugal:"9,optional,string" json:"budgetLevel,omitempty"`
+	Days        []*TripDay `thrift:"days,10,optional" frugal:"10,optional,list<TripDay>" json:"days,omitempty"`
+}
+
+func NewUpdateTripRequest() *UpdateTripRequest {
+	return &UpdateTripRequest{}
+}
+
+func (p *UpdateTripRequest) InitDefault() {
+}
+
+func (p *UpdateTripRequest) GetUserId() (v int64) {
+	return p.UserId
+}
+
+func (p *UpdateTripRequest) GetTripId() (v string) {
+	return p.TripId
+}
+
+var UpdateTripRequest_Title_DEFAULT string
+
+func (p *UpdateTripRequest) GetTitle() (v string) {
+	if !p.IsSetTitle() {
+		return UpdateTripRequest_Title_DEFAULT
+	}
+	return *p.Title
+}
+
+var UpdateTripRequest_Subtitle_DEFAULT string
+
+func (p *UpdateTripRequest) GetSubtitle() (v string) {
+	if !p.IsSetSubtitle() {
+		return UpdateTripRequest_Subtitle_DEFAULT
+	}
+	return *p.Subtitle
+}
+
+var UpdateTripRequest_Destination_DEFAULT string
+
+func (p *UpdateTripRequest) GetDestination() (v string) {
+	if !p.IsSetDestination() {
+		return UpdateTripRequest_Destination_DEFAULT
+	}
+	return *p.Destination
+}
+
+var UpdateTripRequest_DateRange_DEFAULT string
+
+func (p *UpdateTripRequest) GetDateRange() (v string) {
+	if !p.IsSetDateRange() {
+		return UpdateTripRequest_DateRange_DEFAULT
+	}
+	return *p.DateRange
+}
+
+var UpdateTripRequest_DayCount_DEFAULT int32
+
+func (p *UpdateTripRequest) GetDayCount() (v int32) {
+	if !p.IsSetDayCount() {
+		return UpdateTripRequest_DayCount_DEFAULT
+	}
+	return *p.DayCount
+}
+
+var UpdateTripRequest_People_DEFAULT string
+
+func (p *UpdateTripRequest) GetPeople() (v string) {
+	if !p.IsSetPeople() {
+		return UpdateTripRequest_People_DEFAULT
+	}
+	return *p.People
+}
+
+var UpdateTripRequest_BudgetLevel_DEFAULT string
+
+func (p *UpdateTripRequest) GetBudgetLevel() (v string) {
+	if !p.IsSetBudgetLevel() {
+		return UpdateTripRequest_BudgetLevel_DEFAULT
+	}
+	return *p.BudgetLevel
+}
+
+var UpdateTripRequest_Days_DEFAULT []*TripDay
+
+func (p *UpdateTripRequest) GetDays() (v []*TripDay) {
+	if !p.IsSetDays() {
+		return UpdateTripRequest_Days_DEFAULT
+	}
+	return p.Days
+}
+func (p *UpdateTripRequest) SetUserId(val int64) {
+	p.UserId = val
+}
+func (p *UpdateTripRequest) SetTripId(val string) {
+	p.TripId = val
+}
+func (p *UpdateTripRequest) SetTitle(val *string) {
+	p.Title = val
+}
+func (p *UpdateTripRequest) SetSubtitle(val *string) {
+	p.Subtitle = val
+}
+func (p *UpdateTripRequest) SetDestination(val *string) {
+	p.Destination = val
+}
+func (p *UpdateTripRequest) SetDateRange(val *string) {
+	p.DateRange = val
+}
+func (p *UpdateTripRequest) SetDayCount(val *int32) {
+	p.DayCount = val
+}
+func (p *UpdateTripRequest) SetPeople(val *string) {
+	p.People = val
+}
+func (p *UpdateTripRequest) SetBudgetLevel(val *string) {
+	p.BudgetLevel = val
+}
+func (p *UpdateTripRequest) SetDays(val []*TripDay) {
+	p.Days = val
+}
+
+func (p *UpdateTripRequest) IsSetTitle() bool {
+	return p.Title != nil
+}
+
+func (p *UpdateTripRequest) IsSetSubtitle() bool {
+	return p.Subtitle != nil
+}
+
+func (p *UpdateTripRequest) IsSetDestination() bool {
+	return p.Destination != nil
+}
+
+func (p *UpdateTripRequest) IsSetDateRange() bool {
+	return p.DateRange != nil
+}
+
+func (p *UpdateTripRequest) IsSetDayCount() bool {
+	return p.DayCount != nil
+}
+
+func (p *UpdateTripRequest) IsSetPeople() bool {
+	return p.People != nil
+}
+
+func (p *UpdateTripRequest) IsSetBudgetLevel() bool {
+	return p.BudgetLevel != nil
+}
+
+func (p *UpdateTripRequest) IsSetDays() bool {
+	return p.Days != nil
+}
+
+func (p *UpdateTripRequest) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("UpdateTripRequest(%+v)", *p)
+}
+
+var fieldIDToName_UpdateTripRequest = map[int16]string{
+	1:  "userId",
+	2:  "tripId",
+	3:  "title",
+	4:  "subtitle",
+	5:  "destination",
+	6:  "dateRange",
+	7:  "dayCount",
+	8:  "people",
+	9:  "budgetLevel",
+	10: "days",
+}
+
+type UpdateTripResponse struct {
+	BaseResp *base.BaseResp `thrift:"baseResp,1,required" frugal:"1,required,base.BaseResp" json:"baseResp"`
+	Trip     *TripInfo      `thrift:"trip,2,optional" frugal:"2,optional,TripInfo" json:"trip,omitempty"`
+}
+
+func NewUpdateTripResponse() *UpdateTripResponse {
+	return &UpdateTripResponse{}
+}
+
+func (p *UpdateTripResponse) InitDefault() {
+}
+
+var UpdateTripResponse_BaseResp_DEFAULT *base.BaseResp
+
+func (p *UpdateTripResponse) GetBaseResp() (v *base.BaseResp) {
+	if !p.IsSetBaseResp() {
+		return UpdateTripResponse_BaseResp_DEFAULT
+	}
+	return p.BaseResp
+}
+
+var UpdateTripResponse_Trip_DEFAULT *TripInfo
+
+func (p *UpdateTripResponse) GetTrip() (v *TripInfo) {
+	if !p.IsSetTrip() {
+		return UpdateTripResponse_Trip_DEFAULT
+	}
+	return p.Trip
+}
+func (p *UpdateTripResponse) SetBaseResp(val *base.BaseResp) {
+	p.BaseResp = val
+}
+func (p *UpdateTripResponse) SetTrip(val *TripInfo) {
+	p.Trip = val
+}
+
+func (p *UpdateTripResponse) IsSetBaseResp() bool {
+	return p.BaseResp != nil
+}
+
+func (p *UpdateTripResponse) IsSetTrip() bool {
+	return p.Trip != nil
+}
+
+func (p *UpdateTripResponse) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("UpdateTripResponse(%+v)", *p)
+}
+
+var fieldIDToName_UpdateTripResponse = map[int16]string{
+	1: "baseResp",
+	2: "trip",
+}
+
 type TripService interface {
 	CreateTrip(ctx context.Context, req *CreateTripRequest) (r *CreateTripResponse, err error)
 
@@ -1362,6 +1600,8 @@ type TripService interface {
 	GetTripDetail(ctx context.Context, req *GetTripDetailRequest) (r *GetTripDetailResponse, err error)
 
 	DeleteTrip(ctx context.Context, req *DeleteTripRequest) (r *DeleteTripResponse, err error)
+
+	UpdateTrip(ctx context.Context, req *UpdateTripRequest) (r *UpdateTripResponse, err error)
 }
 
 type TripServiceCreateTripArgs struct {
@@ -1741,5 +1981,81 @@ func (p *TripServiceDeleteTripResult) String() string {
 }
 
 var fieldIDToName_TripServiceDeleteTripResult = map[int16]string{
+	0: "success",
+}
+
+type TripServiceUpdateTripArgs struct {
+	Req *UpdateTripRequest `thrift:"req,1" frugal:"1,default,UpdateTripRequest" json:"req"`
+}
+
+func NewTripServiceUpdateTripArgs() *TripServiceUpdateTripArgs {
+	return &TripServiceUpdateTripArgs{}
+}
+
+func (p *TripServiceUpdateTripArgs) InitDefault() {
+}
+
+var TripServiceUpdateTripArgs_Req_DEFAULT *UpdateTripRequest
+
+func (p *TripServiceUpdateTripArgs) GetReq() (v *UpdateTripRequest) {
+	if !p.IsSetReq() {
+		return TripServiceUpdateTripArgs_Req_DEFAULT
+	}
+	return p.Req
+}
+func (p *TripServiceUpdateTripArgs) SetReq(val *UpdateTripRequest) {
+	p.Req = val
+}
+
+func (p *TripServiceUpdateTripArgs) IsSetReq() bool {
+	return p.Req != nil
+}
+
+func (p *TripServiceUpdateTripArgs) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("TripServiceUpdateTripArgs(%+v)", *p)
+}
+
+var fieldIDToName_TripServiceUpdateTripArgs = map[int16]string{
+	1: "req",
+}
+
+type TripServiceUpdateTripResult struct {
+	Success *UpdateTripResponse `thrift:"success,0,optional" frugal:"0,optional,UpdateTripResponse" json:"success,omitempty"`
+}
+
+func NewTripServiceUpdateTripResult() *TripServiceUpdateTripResult {
+	return &TripServiceUpdateTripResult{}
+}
+
+func (p *TripServiceUpdateTripResult) InitDefault() {
+}
+
+var TripServiceUpdateTripResult_Success_DEFAULT *UpdateTripResponse
+
+func (p *TripServiceUpdateTripResult) GetSuccess() (v *UpdateTripResponse) {
+	if !p.IsSetSuccess() {
+		return TripServiceUpdateTripResult_Success_DEFAULT
+	}
+	return p.Success
+}
+func (p *TripServiceUpdateTripResult) SetSuccess(x interface{}) {
+	p.Success = x.(*UpdateTripResponse)
+}
+
+func (p *TripServiceUpdateTripResult) IsSetSuccess() bool {
+	return p.Success != nil
+}
+
+func (p *TripServiceUpdateTripResult) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("TripServiceUpdateTripResult(%+v)", *p)
+}
+
+var fieldIDToName_TripServiceUpdateTripResult = map[int16]string{
 	0: "success",
 }

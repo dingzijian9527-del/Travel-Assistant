@@ -7,6 +7,7 @@ import (
 	"errors"
 	client "github.com/cloudwego/kitex/client"
 	kitex "github.com/cloudwego/kitex/pkg/serviceinfo"
+	streaming "github.com/cloudwego/kitex/pkg/streaming"
 	ai_agent "github.com/dingzijian9527-del/Travel-Assistant/kitex_gen/ai_agent"
 )
 
@@ -20,6 +21,13 @@ var serviceMethods = map[string]kitex.MethodInfo{
 		false,
 		kitex.WithStreamingMode(kitex.StreamingNone),
 	),
+	"ChatStream": kitex.NewMethodInfo(
+		chatStreamHandler,
+		newAIAgentServiceChatStreamArgs,
+		newAIAgentServiceChatStreamResult,
+		false,
+		kitex.WithStreamingMode(kitex.StreamingServer),
+	),
 	"GetPromptSuggestions": kitex.NewMethodInfo(
 		getPromptSuggestionsHandler,
 		newAIAgentServiceGetPromptSuggestionsArgs,
@@ -30,9 +38,7 @@ var serviceMethods = map[string]kitex.MethodInfo{
 }
 
 var (
-	aIAgentServiceServiceInfo                = NewServiceInfo()
-	aIAgentServiceServiceInfoForClient       = NewServiceInfoForClient()
-	aIAgentServiceServiceInfoForStreamClient = NewServiceInfoForStreamClient()
+	aIAgentServiceServiceInfo = NewServiceInfo()
 )
 
 // for server
@@ -40,52 +46,21 @@ func serviceInfo() *kitex.ServiceInfo {
 	return aIAgentServiceServiceInfo
 }
 
-// for stream client
-func serviceInfoForStreamClient() *kitex.ServiceInfo {
-	return aIAgentServiceServiceInfoForStreamClient
-}
-
-// for client
-func serviceInfoForClient() *kitex.ServiceInfo {
-	return aIAgentServiceServiceInfoForClient
-}
-
-// NewServiceInfo creates a new ServiceInfo containing all methods
+// NewServiceInfo creates a new ServiceInfo
 func NewServiceInfo() *kitex.ServiceInfo {
-	return newServiceInfo(false, true, true)
+	return newServiceInfo()
 }
 
-// NewServiceInfo creates a new ServiceInfo containing non-streaming methods
-func NewServiceInfoForClient() *kitex.ServiceInfo {
-	return newServiceInfo(false, false, true)
-}
-func NewServiceInfoForStreamClient() *kitex.ServiceInfo {
-	return newServiceInfo(true, true, false)
-}
-
-func newServiceInfo(hasStreaming bool, keepStreamingMethods bool, keepNonStreamingMethods bool) *kitex.ServiceInfo {
+func newServiceInfo() *kitex.ServiceInfo {
 	serviceName := "AIAgentService"
 	handlerType := (*ai_agent.AIAgentService)(nil)
-	methods := map[string]kitex.MethodInfo{}
-	for name, m := range serviceMethods {
-		if m.IsStreaming() && !keepStreamingMethods {
-			continue
-		}
-		if !m.IsStreaming() && !keepNonStreamingMethods {
-			continue
-		}
-		methods[name] = m
-	}
 	extra := map[string]interface{}{
 		"PackageName": "ai_agent",
-	}
-	if hasStreaming {
-		extra["streaming"] = hasStreaming
 	}
 	svcInfo := &kitex.ServiceInfo{
 		ServiceName:     serviceName,
 		HandlerType:     handlerType,
-		Methods:         methods,
+		Methods:         serviceMethods,
 		PayloadCodec:    kitex.Thrift,
 		KiteXGenVersion: "v0.16.2",
 		Extra:           extra,
@@ -103,12 +78,34 @@ func chatHandler(ctx context.Context, handler interface{}, arg, result interface
 	realResult.Success = success
 	return nil
 }
+
 func newAIAgentServiceChatArgs() interface{} {
 	return ai_agent.NewAIAgentServiceChatArgs()
 }
 
 func newAIAgentServiceChatResult() interface{} {
 	return ai_agent.NewAIAgentServiceChatResult()
+}
+
+func chatStreamHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	st, err := streaming.GetServerStreamFromArg(arg)
+	if err != nil {
+		return err
+	}
+	stream := streaming.NewServerStreamingServer[ai_agent.ChatStreamChunk](st)
+	req := new(ai_agent.ChatRequest)
+	if err := stream.RecvMsg(ctx, req); err != nil {
+		return err
+	}
+	return handler.(ai_agent.AIAgentService).ChatStream(ctx, req, stream)
+}
+
+func newAIAgentServiceChatStreamArgs() interface{} {
+	return ai_agent.NewAIAgentServiceChatStreamArgs()
+}
+
+func newAIAgentServiceChatStreamResult() interface{} {
+	return ai_agent.NewAIAgentServiceChatStreamResult()
 }
 
 func getPromptSuggestionsHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
@@ -121,6 +118,7 @@ func getPromptSuggestionsHandler(ctx context.Context, handler interface{}, arg, 
 	realResult.Success = success
 	return nil
 }
+
 func newAIAgentServiceGetPromptSuggestionsArgs() interface{} {
 	return ai_agent.NewAIAgentServiceGetPromptSuggestionsArgs()
 }
@@ -130,12 +128,14 @@ func newAIAgentServiceGetPromptSuggestionsResult() interface{} {
 }
 
 type kClient struct {
-	c client.Client
+	c  client.Client
+	sc client.Streaming
 }
 
 func newServiceClient(c client.Client) *kClient {
 	return &kClient{
-		c: c,
+		c:  c,
+		sc: c.(client.Streaming),
 	}
 }
 
@@ -147,6 +147,21 @@ func (p *kClient) Chat(ctx context.Context, req *ai_agent.ChatRequest) (r *ai_ag
 		return
 	}
 	return _result.GetSuccess(), nil
+}
+
+func (p *kClient) ChatStream(ctx context.Context, req *ai_agent.ChatRequest) (AIAgentService_ChatStreamClient, error) {
+	st, err := p.sc.StreamX(ctx, "ChatStream")
+	if err != nil {
+		return nil, err
+	}
+	stream := streaming.NewServerStreamingClient[ai_agent.ChatStreamChunk](st)
+	if err := stream.SendMsg(ctx, req); err != nil {
+		return nil, err
+	}
+	if err := stream.CloseSend(ctx); err != nil {
+		return nil, err
+	}
+	return stream, nil
 }
 
 func (p *kClient) GetPromptSuggestions(ctx context.Context, req *ai_agent.PromptSuggestionsRequest) (r *ai_agent.PromptSuggestionsResponse, err error) {

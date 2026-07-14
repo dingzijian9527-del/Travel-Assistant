@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
+	"github.com/cloudwego/kitex/pkg/streaming"
 	"github.com/dingzijian9527-del/Travel-Assistant/kitex_gen/base"
 )
 
@@ -350,8 +351,75 @@ var fieldIDToName_PromptSuggestionsResponse = map[int16]string{
 	2: "suggestions",
 }
 
+type ChatStreamChunk struct {
+	BaseResp *base.BaseResp `thrift:"baseResp,1,required" frugal:"1,required,base.BaseResp" json:"baseResp"`
+	Content  *string        `thrift:"content,2,optional" frugal:"2,optional,string" json:"content,omitempty"`
+	Done     bool           `thrift:"done,3,required" frugal:"3,required,bool" json:"done"`
+}
+
+func NewChatStreamChunk() *ChatStreamChunk {
+	return &ChatStreamChunk{}
+}
+
+func (p *ChatStreamChunk) InitDefault() {
+}
+
+var ChatStreamChunk_BaseResp_DEFAULT *base.BaseResp
+
+func (p *ChatStreamChunk) GetBaseResp() (v *base.BaseResp) {
+	if !p.IsSetBaseResp() {
+		return ChatStreamChunk_BaseResp_DEFAULT
+	}
+	return p.BaseResp
+}
+
+var ChatStreamChunk_Content_DEFAULT string
+
+func (p *ChatStreamChunk) GetContent() (v string) {
+	if !p.IsSetContent() {
+		return ChatStreamChunk_Content_DEFAULT
+	}
+	return *p.Content
+}
+
+func (p *ChatStreamChunk) GetDone() (v bool) {
+	return p.Done
+}
+func (p *ChatStreamChunk) SetBaseResp(val *base.BaseResp) {
+	p.BaseResp = val
+}
+func (p *ChatStreamChunk) SetContent(val *string) {
+	p.Content = val
+}
+func (p *ChatStreamChunk) SetDone(val bool) {
+	p.Done = val
+}
+
+func (p *ChatStreamChunk) IsSetBaseResp() bool {
+	return p.BaseResp != nil
+}
+
+func (p *ChatStreamChunk) IsSetContent() bool {
+	return p.Content != nil
+}
+
+func (p *ChatStreamChunk) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("ChatStreamChunk(%+v)", *p)
+}
+
+var fieldIDToName_ChatStreamChunk = map[int16]string{
+	1: "baseResp",
+	2: "content",
+	3: "done",
+}
+
 type AIAgentService interface {
 	Chat(ctx context.Context, req *ChatRequest) (r *ChatResponse, err error)
+
+	ChatStream(ctx context.Context, req *ChatRequest, stream AIAgentService_ChatStreamServer) (err error)
 
 	GetPromptSuggestions(ctx context.Context, req *PromptSuggestionsRequest) (r *PromptSuggestionsResponse, err error)
 }
@@ -431,6 +499,84 @@ func (p *AIAgentServiceChatResult) String() string {
 var fieldIDToName_AIAgentServiceChatResult = map[int16]string{
 	0: "success",
 }
+
+type AIAgentServiceChatStreamArgs struct {
+	Req *ChatRequest `thrift:"req,1" frugal:"1,default,ChatRequest" json:"req"`
+}
+
+func NewAIAgentServiceChatStreamArgs() *AIAgentServiceChatStreamArgs {
+	return &AIAgentServiceChatStreamArgs{}
+}
+
+func (p *AIAgentServiceChatStreamArgs) InitDefault() {
+}
+
+var AIAgentServiceChatStreamArgs_Req_DEFAULT *ChatRequest
+
+func (p *AIAgentServiceChatStreamArgs) GetReq() (v *ChatRequest) {
+	if !p.IsSetReq() {
+		return AIAgentServiceChatStreamArgs_Req_DEFAULT
+	}
+	return p.Req
+}
+func (p *AIAgentServiceChatStreamArgs) SetReq(val *ChatRequest) {
+	p.Req = val
+}
+
+func (p *AIAgentServiceChatStreamArgs) IsSetReq() bool {
+	return p.Req != nil
+}
+
+func (p *AIAgentServiceChatStreamArgs) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("AIAgentServiceChatStreamArgs(%+v)", *p)
+}
+
+var fieldIDToName_AIAgentServiceChatStreamArgs = map[int16]string{
+	1: "req",
+}
+
+type AIAgentServiceChatStreamResult struct {
+	Success *ChatStreamChunk `thrift:"success,0,optional" frugal:"0,optional,ChatStreamChunk" json:"success,omitempty"`
+}
+
+func NewAIAgentServiceChatStreamResult() *AIAgentServiceChatStreamResult {
+	return &AIAgentServiceChatStreamResult{}
+}
+
+func (p *AIAgentServiceChatStreamResult) InitDefault() {
+}
+
+var AIAgentServiceChatStreamResult_Success_DEFAULT *ChatStreamChunk
+
+func (p *AIAgentServiceChatStreamResult) GetSuccess() (v *ChatStreamChunk) {
+	if !p.IsSetSuccess() {
+		return AIAgentServiceChatStreamResult_Success_DEFAULT
+	}
+	return p.Success
+}
+func (p *AIAgentServiceChatStreamResult) SetSuccess(x interface{}) {
+	p.Success = x.(*ChatStreamChunk)
+}
+
+func (p *AIAgentServiceChatStreamResult) IsSetSuccess() bool {
+	return p.Success != nil
+}
+
+func (p *AIAgentServiceChatStreamResult) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("AIAgentServiceChatStreamResult(%+v)", *p)
+}
+
+var fieldIDToName_AIAgentServiceChatStreamResult = map[int16]string{
+	0: "success",
+}
+
+type AIAgentService_ChatStreamServer streaming.ServerStreamingServer[ChatStreamChunk]
 
 type AIAgentServiceGetPromptSuggestionsArgs struct {
 	Req *PromptSuggestionsRequest `thrift:"req,1" frugal:"1,default,PromptSuggestionsRequest" json:"req"`

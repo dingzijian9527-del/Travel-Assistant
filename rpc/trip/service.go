@@ -1,4 +1,4 @@
-﻿package rpctrip
+package rpctrip
 
 import (
 	"context"
@@ -125,4 +125,52 @@ func (s *tripService) DeleteTrip(ctx context.Context, userID int64, tripID strin
 		return errNotFound("行程不存在")
 	}
 	return nil
+}
+
+func (s *tripService) UpdateTrip(ctx context.Context, userID int64, tripID string, req *updateTripRequest) (*tripModel, *serviceError) {
+	if userID <= 0 {
+		return nil, errParam("用户信息无效")
+	}
+	if strings.TrimSpace(tripID) == "" {
+		return nil, errParam("行程标识无效")
+	}
+	if req == nil {
+		return nil, errParam("请求不能为空")
+	}
+	if s == nil || s.repo == nil {
+		return nil, errInternal("行程服务不可用")
+	}
+	updated, ok, err := s.repo.Update(ctx, userID, tripID, func(item *tripModel) {
+		if req.Title != nil {
+			item.Title = defaultTripTitle(*req.Title)
+		}
+		if req.Subtitle != nil {
+			item.Subtitle = strings.TrimSpace(*req.Subtitle)
+		}
+		if req.Destination != nil {
+			item.Destination = strings.TrimSpace(*req.Destination)
+		}
+		if req.DateRange != nil {
+			item.DateRange = strings.TrimSpace(*req.DateRange)
+		}
+		if req.DayCount != nil {
+			item.DayCount = *req.DayCount
+		}
+		if req.People != nil {
+			item.People = strings.TrimSpace(*req.People)
+		}
+		if req.BudgetLevel != nil {
+			item.BudgetLevel = strings.TrimSpace(*req.BudgetLevel)
+		}
+		if req.Days != nil {
+			item.Days = toModelTripDays(req.Days)
+		}
+	})
+	if err != nil {
+		return nil, errBiz("更新行程失败")
+	}
+	if !ok {
+		return nil, errNotFound("行程不存在")
+	}
+	return updated, nil
 }

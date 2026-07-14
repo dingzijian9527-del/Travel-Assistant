@@ -48,6 +48,13 @@ var serviceMethods = map[string]kitex.MethodInfo{
 		false,
 		kitex.WithStreamingMode(kitex.StreamingNone),
 	),
+	"UpdateTrip": kitex.NewMethodInfo(
+		updateTripHandler,
+		newTripServiceUpdateTripArgs,
+		newTripServiceUpdateTripResult,
+		false,
+		kitex.WithStreamingMode(kitex.StreamingNone),
+	),
 }
 
 var (
@@ -204,6 +211,24 @@ func newTripServiceDeleteTripResult() interface{} {
 	return trip.NewTripServiceDeleteTripResult()
 }
 
+func updateTripHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	realArg := arg.(*trip.TripServiceUpdateTripArgs)
+	realResult := result.(*trip.TripServiceUpdateTripResult)
+	success, err := handler.(trip.TripService).UpdateTrip(ctx, realArg.Req)
+	if err != nil {
+		return err
+	}
+	realResult.Success = success
+	return nil
+}
+func newTripServiceUpdateTripArgs() interface{} {
+	return trip.NewTripServiceUpdateTripArgs()
+}
+
+func newTripServiceUpdateTripResult() interface{} {
+	return trip.NewTripServiceUpdateTripResult()
+}
+
 type kClient struct {
 	c client.Client
 }
@@ -259,6 +284,16 @@ func (p *kClient) DeleteTrip(ctx context.Context, req *trip.DeleteTripRequest) (
 	_args.Req = req
 	var _result trip.TripServiceDeleteTripResult
 	if err = p.c.Call(ctx, "DeleteTrip", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+
+func (p *kClient) UpdateTrip(ctx context.Context, req *trip.UpdateTripRequest) (r *trip.UpdateTripResponse, err error) {
+	var _args trip.TripServiceUpdateTripArgs
+	_args.Req = req
+	var _result trip.TripServiceUpdateTripResult
+	if err = p.c.Call(ctx, "UpdateTrip", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil

@@ -1,4 +1,4 @@
-﻿package rpctrip
+package rpctrip
 
 import (
 	"context"
@@ -95,4 +95,29 @@ func (s *TripServiceImpl) DeleteTrip(ctx context.Context, req *trip.DeleteTripRe
 		return deleteTripErrorResponse(svcErr), nil
 	}
 	return &trip.DeleteTripResponse{BaseResp: successBaseResp()}, nil
+}
+
+func (s *TripServiceImpl) UpdateTrip(ctx context.Context, req *trip.UpdateTripRequest) (*trip.UpdateTripResponse, error) {
+	if req == nil {
+		return updateTripErrorResponse(errParam("请求不能为空")), nil
+	}
+	service, err := s.getService()
+	if err != nil {
+		return updateTripErrorResponse(errInternal("行程服务初始化失败")), nil
+	}
+	svcReq := &updateTripRequest{
+		Title:       req.Title,
+		Subtitle:    req.Subtitle,
+		Destination: req.Destination,
+		DateRange:   req.DateRange,
+		DayCount:    req.DayCount,
+		People:      req.People,
+		BudgetLevel: req.BudgetLevel,
+		Days:        toServiceTripDayPayloads(req.Days),
+	}
+	updated, svcErr := service.UpdateTrip(ctx, req.UserId, req.TripId, svcReq)
+	if svcErr != nil {
+		return updateTripErrorResponse(svcErr), nil
+	}
+	return &trip.UpdateTripResponse{BaseResp: successBaseResp(), Trip: toTripDTO(updated)}, nil
 }

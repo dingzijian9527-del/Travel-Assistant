@@ -9,6 +9,7 @@ import (
 	"github.com/dingzijian9527-del/Travel-Assistant/api/biz/utils/upload"
 	"github.com/dingzijian9527-del/Travel-Assistant/api/biz/validator"
 	"github.com/dingzijian9527-del/Travel-Assistant/pkg/bootstrap"
+	"github.com/dingzijian9527-del/Travel-Assistant/pkg/config"
 )
 
 // UploadCheckRequest 是网关上传校验请求。
@@ -27,16 +28,10 @@ func Ping(runtime *bootstrap.Runtime) app.HandlerFunc {
 // ConfigSummary 返回脱敏后的配置摘要。
 func ConfigSummary(runtime *bootstrap.Runtime) app.HandlerFunc {
 	return func(ctx context.Context, c *app.RequestContext) {
-		cfg := runtime.Config
 		c.JSON(consts.StatusOK, map[string]any{
 			"code": 0,
 			"msg":  "ok",
-			"data": map[string]any{
-				"env":       cfg.App.Env,
-				"http_port": cfg.HTTP.Port,
-				"user_rpc":  cfg.RPC.User.Target,
-				"ai_rpc":    cfg.RPC.AIAgent.Target,
-			},
+			"data": config.SafeConfigSummary(runtime.Config),
 		})
 	}
 }

@@ -3,12 +3,18 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
 
 func TestLoadDefaultRAGConfig(t *testing.T) {
-	cfg, err := Load("")
+	configPath := filepath.Join(t.TempDir(), "config.yaml")
+	if err := os.WriteFile(configPath, []byte(""), 0600); err != nil {
+		t.Fatalf("write temp config failed: %v", err)
+	}
+
+	cfg, err := Load(configPath)
 	if err != nil {
 		t.Fatalf("load config failed: %v", err)
 	}
@@ -34,19 +40,24 @@ func TestLoadDefaultRAGConfig(t *testing.T) {
 }
 
 func TestLoadDefaultInfrastructureConfig(t *testing.T) {
-	cfg, err := Load("")
+	configPath := filepath.Join(t.TempDir(), "config.yaml")
+	if err := os.WriteFile(configPath, []byte(""), 0600); err != nil {
+		t.Fatalf("write temp config failed: %v", err)
+	}
+
+	cfg, err := Load(configPath)
 	if err != nil {
 		t.Fatalf("load config failed: %v", err)
 	}
 
-	if cfg.MySQL.DSN == "" {
-		t.Fatal("mysql dsn should be configured")
+	if cfg.MySQL.DSN != "" {
+		t.Fatalf("mysql dsn default should be empty, got: %s", cfg.MySQL.DSN)
 	}
 	if cfg.Redis.Addr == "" {
 		t.Fatal("redis addr should be configured")
 	}
-	if cfg.Auth.JWTSecret == "" {
-		t.Fatal("jwt secret should be configured")
+	if cfg.Auth.JWTSecret != "" {
+		t.Fatalf("jwt secret default should be empty, got: %q", cfg.Auth.JWTSecret)
 	}
 	if cfg.Auth.JWTExpire <= 0 {
 		t.Fatalf("jwt expire should be positive: %s", cfg.Auth.JWTExpire)
@@ -116,4 +127,79 @@ func TestLoadTravelDataConfigFromConfigFile(t *testing.T) {
 	if cfg.TravelData.Timeout != 8*time.Second {
 		t.Fatalf("unexpected travel data timeout: %s", cfg.TravelData.Timeout)
 	}
+}
+
+func TestValidateForServiceAllowsDevelopmentConfigWithoutOptionalThirdPartyKeys(t *testing.T) {
+	cfg := validConfigForService("api-gateway")
+
+	if err := cfg.ValidateForService("api-gateway"); err != nil {
+		t.Fatalf("development config should be valid: %v", err)
+	}
+}
+
+func TestValidateForServiceRejectsPlaceholderJWTSecret(t *testing.T) {
+	cfg := validConfigForService("api-gateway")
+	cfg.Auth.JWTSecret = "change-me-in-local-config"
+
+	err := cfg.ValidateForService("api-gateway")
+	if err == nil || !strings.Contains(strings.ToLower(err.Error()), "jwt") {
+		t.Fatalf("expected jwt validation error, got: %v", err)
+	}
+}
+
+func TestValidateForServiceRejectsProductionUnsafeSMSFallback(t *testing.T) {
+	cfg := validConfigForService("api-gateway")
+	cfg.App.Env = "prod"
+	cfg.SMS.DevReturnCode = true
+
+	err := cfg.ValidateForService("api-gateway")
+	if err == nil || !strings.Contains(err.Error(), "dev_return_code") {
+		t.Fatalf("expected sms dev_return_code validation error, got: %v", err)
+	}
+}
+
+func TestValidateForServiceRejectsProductionWithoutAIKey(t *testing.T) {
+	cfg := validConfigForService("api-gateway")
+	cfg.App.Env = "prod"
+	cfg.AI.APIKey = ""
+	cfg.AI.EndpointID = ""
+	cfg.Upload.Qiniu = UploadQiniuConfig{}
+	cfg.TravelData.AmapKey = ""
+	cfg.TravelData.QWeatherKey = ""
+
+	err := cfg.ValidateForService("api-gateway")
+	if err == nil || !strings.Contains(strings.ToLower(err.Error()), "ai") {
+		t.Fatalf("expected ai validation error, got: %v", err)
+	}
+}
+
+func validConfigForService(service string) *Config {
+	cfg := &Config{
+		App:  AppConfig{Name: "travel-assistant", Env: "dev"},
+		HTTP: HTTPConfig{Host: "127.0.0.1", Port: 8080, ReadTimeout: 5 * time.Second, WriteTimeout: 10 * time.Second},
+		RPC: RPCConfig{
+			Host:    "127.0.0.1",
+			User:    RPCServiceConfig{ServiceName: "user-service", Port: 9001, Target: "127.0.0.1:9001"},
+			AIAgent: RPCServiceConfig{ServiceName: "ai-agent-service", Port: 9002, Target: "127.0.0.1:9002"},
+			Trip:    RPCServiceConfig{ServiceName: "trip-service", Port: 9003, Target: "127.0.0.1:9003"},
+		},
+		MySQL: MySQLConfig{DSN: "tester:secret@tcp(127.0.0.1:3306)/travel-assistant"},
+		Redis: RedisConfig{Addr: "127.0.0.1:6379"},
+		SMS:   SMSConfig{Endpoint: "https://sms.tencentcloudapi.com", RegisterCodeExpire: 5 * time.Minute},
+		Auth:  AuthConfig{JWTSecret: "unit-test-jwt-secret", JWTExpire: 24 * time.Hour},
+		Upload: UploadConfig{
+			LocalDir:          "uploads",
+			MaxSizeMB:         20,
+			AllowedExtensions: []string{".jpg"},
+		},
+		AI:         AIConfig{Provider: "ark", MaxPromptChars: 2000},
+		RAG:        RAGConfig{Enabled: true, Address: "127.0.0.1:19530", TopK: 3, MinScore: 0.15, EmbeddingDim: 768, CollectionName: "travel_knowledge", Provider: "local"},
+		TravelData: TravelDataConfig{Enabled: true, Timeout: 5 * time.Second},
+	}
+
+	switch service {
+	case "user-service", "trip-service", "ai-agent-service":
+		cfg.HTTP = HTTPConfig{}
+	}
+	return cfg
 }

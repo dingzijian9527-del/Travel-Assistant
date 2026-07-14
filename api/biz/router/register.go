@@ -1,6 +1,8 @@
 package router
 
 import (
+	"time"
+
 	"github.com/cloudwego/hertz/pkg/app/server"
 
 	"github.com/dingzijian9527-del/Travel-Assistant/api/biz/handler"
@@ -16,9 +18,10 @@ func Register(h *server.Hertz, runtime *bootstrap.Runtime) {
 	v1 := h.Group("/api/v1")
 	// 公开接口（无需鉴权）
 	v1.GET("/config", handler.ConfigSummary(runtime))
-	v1.POST("/sms/register-code", handler.SendRegisterCode(runtime))
-	v1.POST("/user/register", handler.RegisterUser(runtime))
-	v1.POST("/user/login", gatewaymw.LoginRateLimit(), handler.LoginUser(runtime))
+	v1.POST("/sms/register-code", gatewaymw.RegisterCodeRateLimit(), handler.SendRegisterCode(runtime))
+	v1.POST("/user/register", gatewaymw.RateLimitByIP("user-register", 5, time.Minute), handler.RegisterUser(runtime))
+	v1.POST("/user/login", gatewaymw.RateLimitByIP("user-login", 5, time.Minute), gatewaymw.LoginRateLimit(), handler.LoginUser(runtime))
+	v1.POST("/user/refresh", handler.TokenRefresh(runtime))
 
 	// 受保护接口（需要有效令牌）
 	auth := v1.Group("", gatewaymw.RequireAuth(runtime))
@@ -30,14 +33,16 @@ func Register(h *server.Hertz, runtime *bootstrap.Runtime) {
 		auth.POST("/user/preferences", handler.UpdateUserPreferences(runtime))
 		auth.GET("/user/settings", handler.GetUserSettings(runtime))
 		auth.POST("/user/settings", handler.UpdateUserSettings(runtime))
-		auth.POST("/upload/check", handler.CheckUpload(runtime))
-		auth.POST("/upload/avatar", handler.UploadAvatar(runtime))
-		auth.POST("/ai-stream", handler.ChatStream(runtime))
-		auth.POST("/ai/chat/stream", handler.ChatStream(runtime))
+		auth.POST("/user/confirm", handler.PasswordConfirm(runtime))
+		auth.POST("/upload/check", gatewaymw.RateLimitByIP("upload-check", 20, time.Minute), handler.CheckUpload(runtime))
+		auth.POST("/upload/avatar", gatewaymw.RateLimitByIP("upload-avatar", 20, time.Minute), handler.UploadAvatar(runtime))
+		auth.POST("/ai-stream", gatewaymw.RateLimitByIP("ai-stream", 20, time.Minute), handler.ChatStream(runtime))
+		auth.POST("/ai/chat/stream", gatewaymw.RateLimitByIP("ai-chat-stream", 20, time.Minute), handler.ChatStream(runtime))
 		auth.POST("/trips", handler.CreateTrip(runtime))
 		auth.GET("/trips", handler.ListTrips(runtime))
 		auth.GET("/trips/latest", handler.GetLatestTrip(runtime))
 		auth.GET("/trips/:tripID", handler.GetTripDetail(runtime))
 		auth.DELETE("/trips/:tripID", handler.DeleteTrip(runtime))
+		auth.PUT("/trips/:tripID", handler.UpdateTrip(runtime))
 	}
 }

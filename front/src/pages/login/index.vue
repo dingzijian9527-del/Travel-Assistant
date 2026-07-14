@@ -26,9 +26,9 @@
 
 <script setup>
 import { ref } from "vue";
+import { apiBase } from "../../utils/runtime.js";
 const phone = ref("");
 const password = ref("");
-const apiBase = "http://127.0.0.1:8080";
 async function login() {
   if (!phone.value.trim() || !password.value.trim()) { toast("请输入手机号和密码"); return; }
   try {

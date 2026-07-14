@@ -16,6 +16,7 @@ type Client interface {
 	GetLatestTrip(ctx context.Context, req *trip.GetLatestTripRequest, callOptions ...callopt.Option) (r *trip.GetLatestTripResponse, err error)
 	GetTripDetail(ctx context.Context, req *trip.GetTripDetailRequest, callOptions ...callopt.Option) (r *trip.GetTripDetailResponse, err error)
 	DeleteTrip(ctx context.Context, req *trip.DeleteTripRequest, callOptions ...callopt.Option) (r *trip.DeleteTripResponse, err error)
+	UpdateTrip(ctx context.Context, req *trip.UpdateTripRequest, callOptions ...callopt.Option) (r *trip.UpdateTripResponse, err error)
 }
 
 // NewClient creates a client for the service defined in IDL.
@@ -70,4 +71,9 @@ func (p *kTripServiceClient) GetTripDetail(ctx context.Context, req *trip.GetTri
 func (p *kTripServiceClient) DeleteTrip(ctx context.Context, req *trip.DeleteTripRequest, callOptions ...callopt.Option) (r *trip.DeleteTripResponse, err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
 	return p.kClient.DeleteTrip(ctx, req)
+}
+
+func (p *kTripServiceClient) UpdateTrip(ctx context.Context, req *trip.UpdateTripRequest, callOptions ...callopt.Option) (r *trip.UpdateTripResponse, err error) {
+	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
+	return p.kClient.UpdateTrip(ctx, req)
 }

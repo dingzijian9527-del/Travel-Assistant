@@ -27,8 +27,16 @@ type Runtime struct {
 
 // Init 在 main 中统一初始化所有需要提前加载的基础组件。
 func Init(service string) (*Runtime, error) {
-	cfg, err := config.InitGlobal(defaultConfigPath)
+	return InitWithConfigPath(service, defaultConfigPath)
+}
+
+// InitWithConfigPath 允许测试或脚本显式指定配置文件路径。
+func InitWithConfigPath(service string, path string) (*Runtime, error) {
+	cfg, err := config.InitGlobal(path)
 	if err != nil {
+		return nil, err
+	}
+	if err := cfg.ValidateForService(service); err != nil {
 		return nil, err
 	}
 	log, err := logger.New(service, *cfg)

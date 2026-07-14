@@ -8,4 +8,5 @@ type tripRepository interface {
 	LatestByUser(ctx context.Context, userID int64) (*tripModel, bool, error)
 	FindByIDForUser(ctx context.Context, userID int64, tripID string) (*tripModel, bool, error)
 	DeleteByIDForUser(ctx context.Context, userID int64, tripID string) bool
+	Update(ctx context.Context, userID int64, tripID string, apply func(*tripModel)) (*tripModel, bool, error)
 }

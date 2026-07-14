@@ -1,6 +1,7 @@
 import { ref } from "vue";
+import { apiBase } from "./runtime.js";
 
-export const apiBase = "http://127.0.0.1:8080";
+export { apiBase };
 
 const USER_STORAGE_KEY = "travel_user";
 export const storedUserRef = ref(readStoredUser());

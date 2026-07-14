@@ -117,6 +117,24 @@ struct DeleteTripResponse {
     1: required base.BaseResp baseResp,
 }
 
+struct UpdateTripRequest {
+    1: required i64 userId,
+    2: required string tripId,
+    3: optional string title,
+    4: optional string subtitle,
+    5: optional string destination,
+    6: optional string dateRange,
+    7: optional i32 dayCount,
+    8: optional string people,
+    9: optional string budgetLevel,
+    10: optional list<TripDay> days,
+}
+
+struct UpdateTripResponse {
+    1: required base.BaseResp baseResp,
+    2: optional TripInfo trip,
+}
+
 // TripService 提供用户行程管理能力。
 service TripService {
     CreateTripResponse CreateTrip(1: CreateTripRequest req),
@@ -124,4 +142,5 @@ service TripService {
     GetLatestTripResponse GetLatestTrip(1: GetLatestTripRequest req),
     GetTripDetailResponse GetTripDetail(1: GetTripDetailRequest req),
     DeleteTripResponse DeleteTrip(1: DeleteTripRequest req),
+    UpdateTripResponse UpdateTrip(1: UpdateTripRequest req),
 }

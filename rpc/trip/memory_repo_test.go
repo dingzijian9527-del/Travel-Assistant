@@ -83,6 +83,19 @@ func (r *tripRepo) DeleteByIDForUser(_ context.Context, userID int64, tripID str
 	return true
 }
 
+func (r *tripRepo) Update(_ context.Context, userID int64, tripID string, apply func(*tripModel)) (*tripModel, bool, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	item, ok := r.trips[tripID]
+	if !ok || item.UserID != userID || item.DeletedAt != nil {
+		return nil, false, nil
+	}
+	apply(item)
+	item.UpdatedAt = time.Now()
+	r.trips[tripID] = item
+	return cloneTrip(item), true, nil
+}
+
 func cloneTrip(input *tripModel) *tripModel {
 	if input == nil {
 		return nil
