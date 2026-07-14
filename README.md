@@ -55,27 +55,40 @@ go test ./...
 
 ## 本地启动前准备
 
-1. 复制配置模板：
+1. 创建本地真实配置文件：
 
-```bash
-cp conf/config.yaml.tpl conf/config.yaml
+```powershell
+Copy-Item conf\config.yaml.tpl conf\config.local.yaml
 ```
 
-2. 最低可运行配置（不依赖任何第三方服务）：
+2. 直接编辑 `conf/config.local.yaml`，填写本机实际值。最低需要填写：
 
-`conf/config.yaml` 保留模板默认占位值即可启动网关和前端页面，智能体回复和短信发送等功能不可用，但不影响本地开发调试。
+```yaml
+mysql:
+  dsn: "数据库连接串"
 
-3. 如需启用智能体回复，在 `conf/config.yaml` 中填入 `ai.api_key` 和 `ai.endpoint_id`。
-
-4. 启动后端网关：
-
-```bash
-go run ./cmd/api
+auth:
+  jwt_secret: "随机令牌密钥"
+  jwt_expire: 24h
+  jwt_refresh_expire: 168h
 ```
 
-5. 启动前端：
+本地配置文件已被忽略规则保护，不能提交真实密码或密钥到 `conf/config.yaml`。
 
-```bash
-cd front && npm run dev:h5
+3. 在项目根目录直接启动后端服务：
+
+```powershell
+go run .\cmd\user
+go run .\cmd\trip
+go run .\cmd\ai-agent
+go run .\cmd\api
 ```
 
+程序会自动优先读取 `conf/config.local.yaml`；本地文件不存在时才读取 `conf/config.yaml` 示例配置。启动过程不依赖配置环境变量。
+
+4. 启动前端：
+
+```powershell
+Set-Location front
+npm.cmd run dev:h5
+```

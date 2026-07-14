@@ -1,4 +1,4 @@
-﻿app:
+app:
   name: travel-assistant
   env: dev
 
@@ -30,30 +30,30 @@ log:
   console: true
 
 mysql:
-  dsn: "${TRAVEL_ASSISTANT_MYSQL_DSN}"
+  dsn: ""
   max_idle_conns: 10
   max_open_conns: 50
   conn_max_lifetime_seconds: 3600
 
 redis:
-  addr: "${TRAVEL_ASSISTANT_REDIS_ADDR}"
-  username: "${TRAVEL_ASSISTANT_REDIS_USERNAME}"
-  password: "${TRAVEL_ASSISTANT_REDIS_PASSWORD}"
+  addr: ""
+  username: ""
+  password: ""
   db: 0
 
 sms:
-  secret_id: "${TRAVEL_ASSISTANT_SMS_SECRET_ID}"
-  secret_key: "${TRAVEL_ASSISTANT_SMS_SECRET_KEY}"
-  sdk_app_id: "${TRAVEL_ASSISTANT_SMS_SDK_APP_ID}"
-  sign_name: "${TRAVEL_ASSISTANT_SMS_SIGN_NAME}"
-  template_id: "${TRAVEL_ASSISTANT_SMS_TEMPLATE_ID}"
+  secret_id: ""
+  secret_key: ""
+  sdk_app_id: ""
+  sign_name: ""
+  template_id: ""
   region: ap-guangzhou
   endpoint: https://sms.tencentcloudapi.com
   register_code_expire: 5m
   dev_return_code: false
 
 auth:
-  jwt_secret: "${TRAVEL_ASSISTANT_AUTH_JWT_SECRET}"
+  jwt_secret: ""
   jwt_expire: 24h
 
 upload:
@@ -66,36 +66,36 @@ upload:
     - .webp
     - .pdf
   qiniu:
-    access_key: "${TRAVEL_ASSISTANT_QINIU_ACCESS_KEY}"
-    secret_key: "${TRAVEL_ASSISTANT_QINIU_SECRET_KEY}"
-    bucket: "${TRAVEL_ASSISTANT_QINIU_BUCKET}"
-    url: "${TRAVEL_ASSISTANT_QINIU_URL}"
-    upload_host: "${TRAVEL_ASSISTANT_QINIU_UPLOAD_HOST}"
+    access_key: ""
+    secret_key: ""
+    bucket: ""
+    url: ""
+    upload_host: ""
 
 rag:
   enabled: true
   provider: local
-  address: "${TRAVEL_ASSISTANT_RAG_ADDRESS}"
+  address: ""
   collection_name: travel_knowledge
   embedding_dim: 768
-  embedding_base_url: "${TRAVEL_ASSISTANT_RAG_EMBEDDING_BASE_URL}"
-  embedding_api_key: "${TRAVEL_ASSISTANT_RAG_EMBEDDING_API_KEY}"
-  embedding_model: "${TRAVEL_ASSISTANT_RAG_EMBEDDING_MODEL}"
+  embedding_base_url: ""
+  embedding_api_key: ""
+  embedding_model: ""
   top_k: 3
   min_score: 0.15
 
 travel_data:
   enabled: true
-  amap_key: "${TRAVEL_ASSISTANT_AMAP_KEY}"
-  qweather_key: "${TRAVEL_ASSISTANT_QWEATHER_KEY}"
+  amap_key: ""
+  qweather_key: ""
   timeout: 5s
 
 ai:
   provider: ark
-  api_key: "${TRAVEL_ASSISTANT_AI_API_KEY}"
+  api_key: ""
   base_url: https://ark.cn-beijing.volces.com/api/v3
-  endpoint_id: "${TRAVEL_ASSISTANT_AI_ENDPOINT_ID}"
-  model_name: "${TRAVEL_ASSISTANT_AI_MODEL_NAME}"
+  endpoint_id: ""
+  model_name: ""
   model: ""
   timeout: 60s
   stream: true
@@ -114,5 +114,3 @@ ai:
     用户说继续、再详细点、换一个、优化、不要太赶时，要基于上一轮方案修改或展开，不要重复生成相同内容。
     非旅游问题统一礼貌婉拒，不延伸回答。
   max_prompt_chars: 2000
-
-
