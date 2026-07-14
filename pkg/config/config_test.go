@@ -129,6 +129,87 @@ func TestLoadTravelDataConfigFromConfigFile(t *testing.T) {
 	}
 }
 
+func TestLoadUsesLocalConfigBeforeExampleConfig(t *testing.T) {
+	root := t.TempDir()
+	confDir := filepath.Join(root, "conf")
+	if err := os.MkdirAll(confDir, 0o755); err != nil {
+		t.Fatalf("create conf dir failed: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(confDir, "config.yaml"), []byte("auth:\n  jwt_secret: example-secret\n"), 0o600); err != nil {
+		t.Fatalf("write example config failed: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(confDir, "config.local.yaml"), []byte("auth:\n  jwt_secret: local-secret\n"), 0o600); err != nil {
+		t.Fatalf("write local config failed: %v", err)
+	}
+	t.Chdir(root)
+
+	cfg, err := Load("")
+	if err != nil {
+		t.Fatalf("load config failed: %v", err)
+	}
+	if cfg.Auth.JWTSecret != "local-secret" {
+		t.Fatalf("jwt secret = %q, want local-secret", cfg.Auth.JWTSecret)
+	}
+}
+
+func TestLoadExplicitPathHasHighestPriority(t *testing.T) {
+	root := t.TempDir()
+	confDir := filepath.Join(root, "conf")
+	if err := os.MkdirAll(confDir, 0o755); err != nil {
+		t.Fatalf("create conf dir failed: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(confDir, "config.local.yaml"), []byte("auth:\n  jwt_secret: local-secret\n"), 0o600); err != nil {
+		t.Fatalf("write local config failed: %v", err)
+	}
+	explicitPath := filepath.Join(root, "explicit.yaml")
+	if err := os.WriteFile(explicitPath, []byte("auth:\n  jwt_secret: explicit-secret\n"), 0o600); err != nil {
+		t.Fatalf("write explicit config failed: %v", err)
+	}
+	t.Chdir(root)
+
+	cfg, err := Load(explicitPath)
+	if err != nil {
+		t.Fatalf("load config failed: %v", err)
+	}
+	if cfg.Auth.JWTSecret != "explicit-secret" {
+		t.Fatalf("jwt secret = %q, want explicit-secret", cfg.Auth.JWTSecret)
+	}
+}
+
+func TestLoadReturnsErrorForInvalidLocalConfig(t *testing.T) {
+	root := t.TempDir()
+	confDir := filepath.Join(root, "conf")
+	if err := os.MkdirAll(confDir, 0o755); err != nil {
+		t.Fatalf("create conf dir failed: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(confDir, "config.yaml"), []byte("auth:\n  jwt_secret: example-secret\n"), 0o600); err != nil {
+		t.Fatalf("write example config failed: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(confDir, "config.local.yaml"), []byte("auth: [\n"), 0o600); err != nil {
+		t.Fatalf("write invalid local config failed: %v", err)
+	}
+	t.Chdir(root)
+
+	if _, err := Load(""); err == nil {
+		t.Fatal("invalid local config should return an error")
+	}
+}
+
+func TestLoadDoesNotOverrideFileValueFromEnvironment(t *testing.T) {
+	configPath := filepath.Join(t.TempDir(), "config.yaml")
+	if err := os.WriteFile(configPath, []byte("auth:\n  jwt_secret: file-secret\n"), 0o600); err != nil {
+		t.Fatalf("write config failed: %v", err)
+	}
+	t.Setenv("TRAVEL_ASSISTANT_AUTH_JWT_SECRET", "environment-secret")
+
+	cfg, err := Load(configPath)
+	if err != nil {
+		t.Fatalf("load config failed: %v", err)
+	}
+	if cfg.Auth.JWTSecret != "file-secret" {
+		t.Fatalf("jwt secret = %q, want file-secret", cfg.Auth.JWTSecret)
+	}
+}
 func TestValidateForServiceAllowsDevelopmentConfigWithoutOptionalThirdPartyKeys(t *testing.T) {
 	cfg := validConfigForService("api-gateway")
 

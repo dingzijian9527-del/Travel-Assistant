@@ -2,6 +2,8 @@ package config
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -139,24 +141,24 @@ const placeholderJWTSecret = "change-me-in-local-config"
 
 var global *Config
 
+func resolveConfigPath(path string) string {
+	if explicit := strings.TrimSpace(path); explicit != "" {
+		return explicit
+	}
+	localPath := filepath.Join("conf", "config.local.yaml")
+	if info, err := os.Stat(localPath); err == nil && !info.IsDir() {
+		return localPath
+	}
+	return filepath.Join("conf", "config.yaml")
+}
+
 func Load(path string) (*Config, error) {
 	v := viper.New()
 	setDefaults(v)
 	v.SetConfigType("yaml")
-	if strings.TrimSpace(path) != "" {
-		v.SetConfigFile(path)
-	} else {
-		v.SetConfigName("config")
-		v.AddConfigPath("conf")
-		v.AddConfigPath(".")
-	}
-	v.SetEnvPrefix("TRAVEL_ASSISTANT")
-	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	v.AutomaticEnv()
+	v.SetConfigFile(resolveConfigPath(path))
 	if err := v.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			return nil, err
-		}
+		return nil, err
 	}
 	var cfg Config
 	if err := v.Unmarshal(&cfg); err != nil {
@@ -164,7 +166,6 @@ func Load(path string) (*Config, error) {
 	}
 	return &cfg, nil
 }
-
 func InitGlobal(path string) (*Config, error) {
 	cfg, err := Load(path)
 	if err != nil {
